@@ -20,11 +20,16 @@ public class RobotMouseMoveScreens {
 
     private static int mouseClickMatches = 0;
 
-    private static float clickMatchPercentage = 0;
+    private static float clickMatchPercentage;
 
-    private static int  dNumScreens = 0;
+    private static int  dNumScreens;
 
     private static String typeOfScaling ;
+
+    private static final int tolerance[] = {0,1};
+    private static final int offset[] = {53, 75, 100};
+
+    private static final int numOffsets = offset.length;
 
     public static void main(String[] args) throws AWTException, InterruptedException {
 
@@ -41,55 +46,70 @@ public class RobotMouseMoveScreens {
 
 
         final Robot robot = new Robot();
-        for (GraphicsDevice screen : screens) {
-            Rectangle bounds = screen.getDefaultConfiguration()
-                                       .getBounds();
-            System.out.println("Screen Number  : " + dNumScreens++);
-            System.out.println(bounds);
-            moveMouseTo(robot, bounds);
-            
+
+        for (int tol: tolerance) {
+            clickMatchPercentage = 0;
+            for (int off : offset) {
+                System.out.println("Offset: " + off);
+                dNumScreens = 0;
+                for (GraphicsDevice screen : screens) {
+                    Rectangle bounds = screen.getDefaultConfiguration()
+                                               .getBounds();
+                    System.out.println("Screen Number  : " + dNumScreens++);
+                    System.out.println(bounds);
+                    moveMouseTo(robot, bounds, off, tol);
+                }
+
+                /* Code below will not be part of the final test, it's being used for data collection  */
+
+                clickMatchPercentage += ((mouseClickMatches * 100) / totalMouseClicks);
+
+                mouseClickMatches = 0;
+                totalMouseClicks = 0;
+
+
+            }
+
+            clickMatchPercentage /= numOffsets;
+            printStats(tol);
         }
-
-        /* Code below will not be part of the final test, it's being used for data collection  */
-
-        printStats();
-
         /* END */
     }
 
-    private static void moveMouseTo(final Robot robot, final Rectangle bounds)
+    private static void moveMouseTo(final Robot robot, final Rectangle bounds, int offset, int tolerance)
             throws InterruptedException {
 
-        for (int x= 0; x < (bounds.width - 1);x+=50)
-        {
-            for (int y= 0;y < (bounds.height - 1);y+=50)
-            {
-                int ptX = x + bounds.x;
-                int ptY = y + bounds.y;
+            for (int x = 0; x < (bounds.width - 1); x += offset) {
+                for (int y = 0; y < (bounds.height - 1); y += offset) {
+                    int ptX = x + bounds.x;
+                    int ptY = y + bounds.y;
 
-                Point p = new Point(ptX, ptY);
+                    Point p = new Point(ptX, ptY);
 
-                robot.mouseMove(p.x, p.y);
-                totalMouseClicks++;
+                    robot.mouseMove(p.x, p.y);
+                    totalMouseClicks++;
 
-                Thread.sleep(DELAY);
+                    Thread.sleep(DELAY);
 
-                final Point mouse = MouseInfo.getPointerInfo().getLocation();
+                    final Point mouse = MouseInfo.getPointerInfo().getLocation();
 
-                if(p.x == mouse.x && p.y == mouse.y)
-                {
-                    mouseClickMatches++;
+                    int xDiff = Math.abs(p.x - mouse.x);
+                    int yDiff = Math.abs(p.y - mouse.y);
+
+                    if ((xDiff<= tolerance) && (yDiff <= tolerance)) {
+                        mouseClickMatches++;
+                    }
+
                 }
-
             }
-        }
     }
 
-    private static void printStats()
+    private static void printStats(int tolerance)
     {
         /* Code below will not be part of the final test, it's being used for data collection  */
-        clickMatchPercentage = ((mouseClickMatches *100) / totalMouseClicks) ;
+
         System.out.println("************************************************");
+        System.out.println(" Tolerance: " + tolerance);
         System.out.println(" Type of Scaling: " + typeOfScaling);
         System.out.println(" Click Match Percentage: " + clickMatchPercentage);
         System.out.println("************************************************");
