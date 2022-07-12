@@ -34,6 +34,7 @@ import java.awt.geom.Path2D;
 import java.awt.geom.Rectangle2D;
 import java.awt.geom.RoundRectangle2D;
 import java.beans.ConstructorProperties;
+import java.awt.geom.AffineTransform;
 
 /**
  * A class which implements a line border of arbitrary thickness
@@ -142,30 +143,43 @@ public class LineBorder extends AbstractBorder
      */
     public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
         if ((this.thickness > 0) && (g instanceof Graphics2D)) {
+            System.out.println("x: " + x + ", y: " + y);
             Graphics2D g2d = (Graphics2D) g;
 
             Color oldColor = g2d.getColor();
             g2d.setColor(this.lineColor);
 
+            AffineTransform oldTransform = g2d.getTransform();
+            g2d.setTransform(new AffineTransform());
+
+            int xtranslation = (int) Math.floor(oldTransform.getScaleX() * x + oldTransform.getTranslateX());
+            int ytranslation = (int) Math.floor(oldTransform.getScaleY() * y + oldTransform.getTranslateY());
+            g2d.translate(xtranslation, ytranslation);
+
+            int w = (int) Math.floor(oldTransform.getScaleX() * width);
+            int h = (int) Math.floor(oldTransform.getScaleY() * height);
+
             Shape outer;
             Shape inner;
 
-            int offs = this.thickness;
+            int offs = (int) Math.ceil(this.thickness * oldTransform.getScaleX());
             int size = offs + offs;
             if (this.roundedCorners) {
                 float arc = .2f * offs;
-                outer = new RoundRectangle2D.Float(x, y, width, height, offs, offs);
-                inner = new RoundRectangle2D.Float(x + offs, y + offs, width - size, height - size, arc, arc);
+                outer = new RoundRectangle2D.Float(x, y, w, h, offs, offs);
+                inner = new RoundRectangle2D.Float(x + offs, y + offs, w - size, h - size, arc, arc);
             }
             else {
-                outer = new Rectangle2D.Float(x, y, width, height);
-                inner = new Rectangle2D.Float(x + offs, y + offs, width - size, height - size);
+                outer = new Rectangle2D.Float(x, y, w, h);
+                inner = new Rectangle2D.Float(x + offs, y + offs, w - size, h - size);
             }
             Path2D path = new Path2D.Float(Path2D.WIND_EVEN_ODD);
             path.append(outer, false);
             path.append(inner, false);
             g2d.fill(path);
+            g2d.translate(-xtranslation, -ytranslation);
             g2d.setColor(oldColor);
+            g2d.setTransform(oldTransform);
         }
     }
 
