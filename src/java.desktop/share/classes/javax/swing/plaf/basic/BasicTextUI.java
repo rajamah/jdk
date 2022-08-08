@@ -24,6 +24,8 @@
  */
 package javax.swing.plaf.basic;
 
+import java.awt.geom.AffineTransform;
+import java.awt.geom.Dimension2D;
 import java.util.*;
 import java.awt.*;
 import java.awt.event.*;
@@ -669,7 +671,8 @@ public abstract class BasicTextUI extends TextUI implements ViewFactory {
      * @param g the graphics context
      */
     protected void paintBackground(Graphics g) {
-        g.setColor(editor.getBackground());
+       // g.setColor(editor.getBackground());
+        g.setColor( new Color(255,0,0,255));
         g.fillRect(0, 0, editor.getWidth(), editor.getHeight());
     }
 
@@ -714,6 +717,18 @@ public abstract class BasicTextUI extends TextUI implements ViewFactory {
     }
 
     /**
+     * Round the double to nearest integer, make sure we round to lower integer value for 0.5
+     *
+     * @param d number to be rounded
+     * @return a {@code int} which is the rounded value of provided number
+     */
+    private static int roundDown(double d)
+    {
+        double decP = (Math.ceil(d) - d);
+        return (int)((decP == 0.5) ?  Math.floor(d) :  Math.round(d));
+    }
+
+    /**
      * Paints the interface safely with a guarantee that
      * the model won't change from the view of this thread.
      * This does the following things, rendering from
@@ -735,13 +750,44 @@ public abstract class BasicTextUI extends TextUI implements ViewFactory {
      */
     protected void paintSafely(Graphics g) {
         painted = true;
+
         Highlighter highlighter = editor.getHighlighter();
         Caret caret = editor.getCaret();
+        Graphics2D g2d = (Graphics2D) g;
+        AffineTransform oldTransform = g2d.getTransform();
+
+        int oldWidth = editor.getWidth();
+        int oldHeight = editor.getHeight();
+
+        int xtranslation = 0;
+        int ytranslation = 0;
+        int w=0;
+        int h=0;
+
+        /* Deactivate the HiDPI scaling transform so we can do paint operations in the device
+            pixel coordinate system instead of in the logical coordinate system.
+         */
+        g2d.setTransform(new AffineTransform());
+
+        xtranslation = roundDown(oldTransform.getTranslateX());
+        ytranslation = roundDown(oldTransform.getTranslateY());
+
+
+        g2d.translate(xtranslation, ytranslation);
+
+        w = roundDown(oldTransform.getScaleX() * oldWidth);
+        h = roundDown(oldTransform.getScaleY() * oldHeight);
+
+        editor.setSize(w, h);
 
         // paint the background
         if (editor.isOpaque()) {
             paintBackground(g);
         }
+
+        g2d.translate(-xtranslation, -ytranslation);
+        g2d.setTransform(oldTransform);
+        editor.setSize(oldWidth, oldHeight);
 
         // paint the highlights
         if (highlighter != null) {
@@ -762,6 +808,8 @@ public abstract class BasicTextUI extends TextUI implements ViewFactory {
         if (dropCaret != null) {
             dropCaret.paint(g);
         }
+
+
     }
 
     // --- ComponentUI methods --------------------------------------------

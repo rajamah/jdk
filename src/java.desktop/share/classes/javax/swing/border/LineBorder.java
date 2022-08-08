@@ -131,6 +131,18 @@ public class LineBorder extends AbstractBorder
     }
 
     /**
+     * Round the double to nearest integer, make sure we round to lower integer value for 0.5
+     *
+     * @param d number to be rounded
+     * @return a {@code int} which is the rounded value of provided number
+     */
+    private static int roundDown(double d)
+    {
+        double decP = (Math.ceil(d) - d);
+        return (int)((decP == 0.5) ?  Math.floor(d) :  Math.round(d));
+    }
+
+    /**
      * Paints the border for the specified component with the
      * specified position and size.
      *
@@ -143,28 +155,44 @@ public class LineBorder extends AbstractBorder
      */
     public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
         if ((this.thickness > 0) && (g instanceof Graphics2D)) {
-            System.out.println("x: " + x + ", y: " + y);
+
             Graphics2D g2d = (Graphics2D) g;
 
             Color oldColor = g2d.getColor();
-            g2d.setColor(this.lineColor);
+           // g2d.setColor(this.lineColor);
 
+            g2d.setColor(new Color(0,0,0,255));
             AffineTransform oldTransform = g2d.getTransform();
+
+             /* Deactivate the HiDPI scaling transform so we can do paint operations in the device
+                pixel coordinate system instead of in the logical coordinate system.
+             */
+
             g2d.setTransform(new AffineTransform());
 
-            int xtranslation = (int) Math.floor(oldTransform.getScaleX() * x + oldTransform.getTranslateX());
-            int ytranslation = (int) Math.floor(oldTransform.getScaleY() * y + oldTransform.getTranslateY());
-            g2d.translate(xtranslation, ytranslation);
-
-            int w = (int) Math.floor(oldTransform.getScaleX() * width);
-            int h = (int) Math.floor(oldTransform.getScaleY() * height);
-
+            int xtranslation = 0;
+            int ytranslation = 0;
+            int w=0;
+            int h=0;
+            int offs = 0;
             Shape outer;
             Shape inner;
 
-            int offs = (int) Math.ceil(this.thickness * oldTransform.getScaleX());
+
+            xtranslation = roundDown(oldTransform.getScaleX() * x + oldTransform.getTranslateX()) ;
+            ytranslation = roundDown(oldTransform.getScaleY() * y + oldTransform.getTranslateY());
+
+            g2d.translate(xtranslation, ytranslation);
+
+            w = roundDown(oldTransform.getScaleX() * width);
+            h = roundDown(oldTransform.getScaleY() * height);
+
+            offs = roundDown(this.thickness * oldTransform.getScaleX());
+
             int size = offs + offs;
-            if (this.roundedCorners) {
+
+            if (this.roundedCorners)
+            {
                 float arc = .2f * offs;
                 outer = new RoundRectangle2D.Float(x, y, w, h, offs, offs);
                 inner = new RoundRectangle2D.Float(x + offs, y + offs, w - size, h - size, arc, arc);
@@ -173,10 +201,13 @@ public class LineBorder extends AbstractBorder
                 outer = new Rectangle2D.Float(x, y, w, h);
                 inner = new Rectangle2D.Float(x + offs, y + offs, w - size, h - size);
             }
+
             Path2D path = new Path2D.Float(Path2D.WIND_EVEN_ODD);
             path.append(outer, false);
             path.append(inner, false);
             g2d.fill(path);
+
+
             g2d.translate(-xtranslation, -ytranslation);
             g2d.setColor(oldColor);
             g2d.setTransform(oldTransform);
