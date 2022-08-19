@@ -158,9 +158,9 @@ public class LineBorder extends AbstractBorder
             Graphics2D g2d = (Graphics2D) g;
 
             Color oldColor = g2d.getColor();
-           // g2d.setColor(this.lineColor);
+            g2d.setColor(this.lineColor);
 
-            g2d.setColor(new Color(0,0,0,255));
+            //g2d.setColor(new Color(0,0,0,255));
             AffineTransform oldTransform = g2d.getTransform();
 
              /* Deactivate the HiDPI scaling transform so we can do paint operations in the device

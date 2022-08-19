@@ -671,8 +671,7 @@ public abstract class BasicTextUI extends TextUI implements ViewFactory {
      * @param g the graphics context
      */
     protected void paintBackground(Graphics g) {
-       // g.setColor(editor.getBackground());
-        g.setColor( new Color(255,0,0,255));
+        g.setColor(editor.getBackground());
         g.fillRect(0, 0, editor.getWidth(), editor.getHeight());
     }
 
