@@ -31,6 +31,8 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 
 import javax.imageio.ImageIO;
@@ -51,10 +53,10 @@ import javax.swing.SwingUtilities;
 
 public class ScaledEtchedBorderTest {
 
-    public static final Dimension SIZE = new Dimension(120, 20);
+    public static final Dimension SIZE = new Dimension(125, 25);
 
-    public static Color highlight = Color.RED;
-    public static Color shadow = Color.BLUE;
+    public static final Color HIGHLIGHT = Color.RED;
+    public static final Color SHADOW = Color.BLUE;
 
     private static final double[] scales =
             {1.00, 1.25, 1.50, 1.75, 2.00, 2.50, 3.00};
@@ -66,115 +68,114 @@ public class ScaledEtchedBorderTest {
             new ArrayList<>(4);
 
     public static void main(String[] args) throws Exception {
-        boolean showFrame = args.length > 0 && "-show".equals(args[0]);
-        SwingUtilities.invokeAndWait(() -> testScaling(showFrame));
+        Collection<String> params = Arrays.asList(args);
+        final boolean showFrame = params.contains("-show");
+        final boolean saveImages = params.contains("-save");
+        SwingUtilities.invokeAndWait(() -> testScaling(showFrame, saveImages));
     }
 
-    private static void testScaling(boolean show) {
-        createGUI(show);
+    private static void testScaling(boolean showFrame, boolean saveImages) {
+        createGUI(showFrame, saveImages);
 
-        for (int i = 0; i < scales.length; i++) {
+        String errorMessage = null;
+        int errorCount = 0;
+        for (int i = 0; i < images.size(); i++) {
             BufferedImage img = images.get(i);
             double scaling = scales[i];
-            System.out.println("Testing scaling: " + scaling);
+            try {
+                int thickness = (int) Math.floor(scaling);
 
+                checkVerticalBorders(SIZE.width / 2, thickness, img);
 
-            // checking vertical border
-            int x = SIZE.width / 2;
-            checkVerticalBorder(x, img, scaling);
-
-            for (Point p : panelLocations) {
-                int y = (int) (p.y * scaling) + SIZE.height / 2;
-                checkHorizontalBorder(y, img, scaling);
-            }
-        }
-    }
-
-    private static void checkHorizontalBorder(int y, BufferedImage img, double scaling) {
-        int thickness = 0;
-        boolean checkShadow = false;
-        boolean checkHighlight = false;
-        for (int x = 0; x < img.getWidth(); x++) {
-            int color = img.getRGB(x, y);
-            if (!checkHighlight && !checkShadow) {
-                if (color == shadow.getRGB()) {
-                    checkHighlight = true;
-                    thickness++;
-                } else if (color == highlight.getRGB()) {
-                    throw new RuntimeException("Horizontal Border was clipped or overdrawn.");
+                for (Point p : panelLocations) {
+                    int y = (int) (p.y * scaling) + SIZE.height / 2;
+                    checkHorizontalBorder(y, thickness, img);
                 }
-            } else if (checkHighlight) {
-                if (color == shadow.getRGB()) {
-                    thickness++;
-                } else if (color == highlight.getRGB()) {
-                    verifyThickness(x, y, thickness, scaling, "Horizontal");
-                    checkHighlight = false;
-                    checkShadow = true;
-                    thickness = 1;
-                } else {
-                    throw new RuntimeException("Horizontal Border has empty space between highlight and shadow.");
+            } catch (Error e) {
+                if (errorMessage == null) {
+                    errorMessage = e.getMessage();
                 }
-            } else {
-                if (color == shadow.getRGB()) {
-                    throw new RuntimeException("Border colors reversed.");
-                } else if (color == highlight.getRGB()) {
-                    thickness++;
-                } else {
-                    verifyThickness(x, y, thickness, scaling, "Horizontal");
-                    checkShadow = false;
-                    thickness = 0;
+                errorCount++;
+
+                System.err.printf("Scaling: %.2f\n", scaling);
+                e.printStackTrace();
+
+                // Save the image if it wasn't already saved
+                if (!saveImages) {
+                    saveImage(img, getImageFileName(scaling));
                 }
             }
         }
-    }
 
-    private static void verifyThickness(int x, int y, int thickness, double scaling, String orientation) {
-        int expected = (int) Math.floor(scaling);
-        if (thickness != expected) {
-            throw new RuntimeException("Unexpected " + orientation + " Border thickness at x:"
-                                       + x + " y: " + y + ". Expected: " + expected + " Actual: " + thickness);
+        if (errorCount > 0) {
+            throw new Error("Test failed: "
+                            + errorCount + " error(s) detected - "
+                            + errorMessage);
         }
     }
 
-    private static void checkVerticalBorder(int x, BufferedImage img, double scaling) {
-        int thickness = 0;
-        boolean checkShadow = false;
-        boolean checkHighlight = false;
-        for (int y = 0; y < img.getHeight(); y++) {
-            int color = img.getRGB(x, y);
-            if (!checkHighlight && !checkShadow) {
-                if (color == shadow.getRGB()) {
-                    checkHighlight = true;
-                    thickness++;
-                } else if (color == highlight.getRGB()) {
-                    throw new RuntimeException("Vertical Border was clipped or overdrawn.");
-                }
-            } else if (checkHighlight) {
-                if (color == shadow.getRGB()) {
-                    thickness++;
-                } else if (color == highlight.getRGB()) {
-                    verifyThickness(x, y, thickness, scaling, "Vertical");
-                    checkHighlight = false;
-                    checkShadow = true;
-                    thickness = 1;
-                } else {
-                    throw new RuntimeException("Vertical Border has empty space between highlight and shadow.");
-                }
-            } else {
-                if (color == shadow.getRGB()) {
-                    throw new RuntimeException("Border colors reversed.");
-                } else if (color == highlight.getRGB()) {
-                    thickness++;
-                } else {
-                    verifyThickness(x, y, thickness, scaling, "Vertical");
-                    checkShadow = false;
-                    thickness = 0;
-                }
-            }
-        }
+    private static void checkVerticalBorders(final int x,
+                                             final int thickness,
+                                             final BufferedImage img) {
+        checkBorder(x, 0,
+                    0, 1,
+                    thickness, img);
     }
 
-    private static void createGUI(boolean show) {
+    private static void checkHorizontalBorder(final int y,
+                                              final int thickness,
+                                              final BufferedImage img) {
+        checkBorder(0, y,
+                    1, 0,
+                    thickness, img);
+    }
+
+    private static void checkBorder(final int xStart, final int yStart,
+                                    final int xStep,  final int yStep,
+                                    final int thickness,
+                                    final BufferedImage img) {
+        final int width = img.getWidth();
+        final int height = img.getHeight();
+        int shadow = 0;
+        int highlight = 0;
+
+        int x = xStart;
+        int y = yStart;
+        do {
+            do {
+                int color = img.getRGB(x, y);
+                if (color == SHADOW.getRGB()) {
+                    shadow++;
+                } else if (color == HIGHLIGHT.getRGB()) {
+                    if (highlight == 0) {
+                        if (shadow != thickness) {
+                            throw new Error(
+                                    String.format("Wrong shadow thickness at %d, %d: %d vs %d",
+                                                  x, y, shadow, thickness));
+                        }
+                        shadow = 0;
+                    }
+                    highlight++;
+                } else {
+                    if (shadow > 0) {
+                        throw new Error(
+                                String.format("Background color after shadow at %d, %d",
+                                              x, y));
+                    }
+                    if (highlight > 0) {
+                        if (highlight != thickness) {
+                            throw new Error(
+                                    String.format("Wrong highlight thickness at %d, %d: %d vs %d",
+                                                  x, y, highlight, thickness));
+                        }
+                        highlight = 0;
+                    }
+                }
+            } while (yStep > 0 && ((y += yStep) < height));
+        } while (xStep > 0 && ((x += xStep) < width));
+    }
+
+    private static void createGUI(boolean showFrame, boolean saveImages) {
         // Render content panel
         JPanel contentPanel = new JPanel();
         contentPanel.setLayout(new BoxLayout(contentPanel, BoxLayout.Y_AXIS));
@@ -184,7 +185,7 @@ public class ScaledEtchedBorderTest {
             JPanel childPanel = new JPanel(new BorderLayout());
             childPanel.setBorder(BorderFactory.createCompoundBorder(
                     BorderFactory.createEmptyBorder(0, i, 4, 4),
-                    BorderFactory.createEtchedBorder(highlight, shadow)));
+                    BorderFactory.createEtchedBorder(HIGHLIGHT, SHADOW)));
             childPanel.add(Box.createRigidArea(SIZE), BorderLayout.CENTER);
 
             contentPanel.add(childPanel);
@@ -198,31 +199,39 @@ public class ScaledEtchedBorderTest {
 
         for (double scaling : scales) {
             // Create BufferedImage
-            BufferedImage buff = new BufferedImage((int) Math.ceil(contentPanel.getWidth() * scaling),
-                    (int) Math.ceil(contentPanel.getHeight() * scaling),
-                    BufferedImage.TYPE_INT_ARGB);
-            Graphics2D graph = buff.createGraphics();
+            BufferedImage image =
+                    new BufferedImage((int) Math.ceil(contentPanel.getWidth() * scaling),
+                                      (int) Math.ceil(contentPanel.getHeight() * scaling),
+                                      BufferedImage.TYPE_INT_ARGB);
+            Graphics2D graph = image.createGraphics();
             graph.scale(scaling, scaling);
             // Painting panel onto BufferedImage
             contentPanel.paint(graph);
             graph.dispose();
-            // Save each image ? -- Here it's useful for debugging
-            saveImage(buff, String.format("test%.2f.png", scaling));
-            images.add(buff);
+
+            if (saveImages) {
+                saveImage(image, getImageFileName(scaling));
+            }
+            images.add(image);
         }
+
         // Save coordinates of the panels
         for (Component comp : contentPanel.getComponents()) {
             panelLocations.add(comp.getLocation());
         }
 
-        if (show) {
-            JFrame frame = new JFrame("Swing Test");
+        if (showFrame) {
+            JFrame frame = new JFrame("Scaled Etched Border Test");
             frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
             frame.getContentPane().add(contentPanel, BorderLayout.CENTER);
             frame.pack();
             frame.setLocationRelativeTo(null);
             frame.setVisible(true);
         }
+    }
+
+    private static String getImageFileName(final double scaling) {
+        return String.format("test%.2f.png", scaling);
     }
 
     private static void saveImage(BufferedImage image, String filename) {
