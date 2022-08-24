@@ -155,19 +155,28 @@ public class LineBorder extends AbstractBorder
      */
     public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
         if ((this.thickness > 0) && (g instanceof Graphics2D)) {
+
             Graphics2D g2d = (Graphics2D) g;
 
+            AffineTransform at = g2d.getTransform();;
+            boolean resetTransform = false;
+
             Color oldColor = g2d.getColor();
+
             g2d.setColor(this.lineColor);
 
-            //g2d.setColor(new Color(0,0,0,255));
-            AffineTransform oldTransform = g2d.getTransform();
+            // if m01 or m10 is non-zero, then there is a rotation or shear
+            // skip resetting the transform
+            resetTransform = (at.getShearX() == 0) && (at.getShearY() == 0);
 
-             /* Deactivate the HiDPI scaling transform so we can do paint operations in the device
+            if (resetTransform) {
+                /* Deactivate the HiDPI scaling transform so we can do paint operations in the device
                 pixel coordinate system instead of in the logical coordinate system.
-             */
+                */
 
-            g2d.setTransform(new AffineTransform());
+                g2d.setTransform(new AffineTransform());
+            }
+
 
             int xtranslation = 0;
             int ytranslation = 0;
@@ -178,15 +187,24 @@ public class LineBorder extends AbstractBorder
             Shape inner;
 
 
-            xtranslation = roundDown(oldTransform.getScaleX() * x + oldTransform.getTranslateX()) ;
-            ytranslation = roundDown(oldTransform.getScaleY() * y + oldTransform.getTranslateY());
+            if (resetTransform) {
+                xtranslation = roundDown(at.getScaleX() * x + at.getTranslateX());
+                ytranslation = roundDown(at.getScaleY() * y + at.getTranslateY());
+                w = roundDown(at.getScaleX() * width);
+                h = roundDown(at.getScaleY() * height);
+                offs = roundDown(this.thickness * at.getScaleX());
+            }
+            else
+            {
+                w = width;
+                h = height;
+                xtranslation = x;
+                ytranslation = y;
+                offs = this.thickness;
+
+            }
 
             g2d.translate(xtranslation, ytranslation);
-
-            w = roundDown(oldTransform.getScaleX() * width);
-            h = roundDown(oldTransform.getScaleY() * height);
-
-            offs = roundDown(this.thickness * oldTransform.getScaleX());
 
             int size = offs + offs;
             if (this.roundedCorners) {
@@ -203,10 +221,13 @@ public class LineBorder extends AbstractBorder
             path.append(inner, false);
             g2d.fill(path);
 
-
             g2d.translate(-xtranslation, -ytranslation);
-            g2d.setColor(oldColor);
-            g2d.setTransform(oldTransform);
+
+            // Set the transform we removed earlier
+            if (resetTransform) {
+                g2d.setColor(oldColor);
+                g2d.setTransform(at);
+            }
         }
     }
 

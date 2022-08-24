@@ -752,29 +752,39 @@ public abstract class BasicTextUI extends TextUI implements ViewFactory {
         Highlighter highlighter = editor.getHighlighter();
         Caret caret = editor.getCaret();
         Graphics2D g2d = (Graphics2D) g;
-        AffineTransform oldTransform = g2d.getTransform();
+
+        AffineTransform at = g2d.getTransform();
+        boolean resetTransform = false;
+
+        // if m01 or m10 is non-zero, then there is a rotation or shear
+        // skip resetting the transform
+        resetTransform = (at.getShearX() == 0) && (at.getShearY() == 0);
+        if (resetTransform) {
+            /* Deactivate the HiDPI scaling transform so we can do paint operations in the device
+            pixel coordinate system instead of in the logical coordinate system.
+            */
+            g2d.setTransform(new AffineTransform());
+        }
+
 
         int oldWidth = editor.getWidth();
         int oldHeight = editor.getHeight();
 
         int xtranslation = 0;
         int ytranslation = 0;
-        int w=0;
-        int h=0;
+        int w = oldWidth;
+        int h = oldHeight;
 
-        /* Deactivate the HiDPI scaling transform so we can do paint operations in the device
-            pixel coordinate system instead of in the logical coordinate system.
-         */
-        g2d.setTransform(new AffineTransform());
 
-        xtranslation = roundDown(oldTransform.getTranslateX());
-        ytranslation = roundDown(oldTransform.getTranslateY());
+        if (resetTransform) {
+            w = roundDown(at.getScaleX() * w);
+            h = roundDown(at.getScaleY() * h);
+            xtranslation = roundDown(at.getTranslateX());
+            ytranslation = roundDown(at.getTranslateY());
+        }
 
 
         g2d.translate(xtranslation, ytranslation);
-
-        w = roundDown(oldTransform.getScaleX() * oldWidth);
-        h = roundDown(oldTransform.getScaleY() * oldHeight);
 
         editor.setSize(w, h);
 
@@ -784,8 +794,11 @@ public abstract class BasicTextUI extends TextUI implements ViewFactory {
         }
 
         g2d.translate(-xtranslation, -ytranslation);
-        g2d.setTransform(oldTransform);
-        editor.setSize(oldWidth, oldHeight);
+
+        if(resetTransform) {
+            g2d.setTransform(at);
+            editor.setSize(oldWidth, oldHeight);
+        }
 
         // paint the highlights
         if (highlighter != null) {
