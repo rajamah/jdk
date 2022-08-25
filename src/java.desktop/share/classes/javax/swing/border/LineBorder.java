@@ -186,7 +186,7 @@ public class LineBorder extends AbstractBorder
             w = roundDown(oldTransform.getScaleX() * width);
             h = roundDown(oldTransform.getScaleY() * height);
 
-            offs = roundDown(this.thickness * oldTransform.getScaleX());
+            offs = this.thickness * (int) oldTransform.getScaleX();
 
             int size = offs + offs;
             if (this.roundedCorners) {
