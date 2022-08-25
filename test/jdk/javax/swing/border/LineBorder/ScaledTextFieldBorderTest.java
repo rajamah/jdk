@@ -54,8 +54,6 @@ import javax.swing.UnsupportedLookAndFeelException;
  */
 
 public class ScaledTextFieldBorderTest {
-    public static final Dimension SIZE = new Dimension(125, 25);
-
     private static final Color BORDER_COLOR = Color.BLACK;
 
     private static final double[] scales = {
@@ -69,6 +67,8 @@ public class ScaledTextFieldBorderTest {
 
     private static final List<Point> panelLocations =
             new ArrayList<>(4);
+
+    private static Dimension textFieldSize;
 
     public static void main(String[] args) throws Exception {
         Collection<String> params = Arrays.asList(args);
@@ -95,10 +95,10 @@ public class ScaledTextFieldBorderTest {
             try {
                 int thickness = (int) Math.floor(scaling);
 
-                checkVerticalBorders(SIZE.width / 2, thickness, img);
+                checkVerticalBorders(textFieldSize.width / 2, thickness, img);
 
                 for (Point p : panelLocations) {
-                    int y = (int) (p.y * scaling) + SIZE.height / 2;
+                    int y = (int) (p.y * scaling) + textFieldSize.height / 2;
                     checkHorizontalBorder(y, thickness, img);
                 }
             } catch (Error | Exception e) {
@@ -114,7 +114,6 @@ public class ScaledTextFieldBorderTest {
                 if (!saveImages) {
                     saveImage(img, getImageFileName(scaling));
                 }
-                break;
             }
         }
 
@@ -153,7 +152,6 @@ public class ScaledTextFieldBorderTest {
         int y = yStart;
         do {
             do {
-                System.out.println(x + ", " + y);
                 int color = img.getRGB(x, y);
                 if (color == BORDER_COLOR.getRGB()) {
                     if (borderThickness < 0) {
@@ -184,7 +182,6 @@ public class ScaledTextFieldBorderTest {
         JPanel contentPanel = new JPanel();
         contentPanel.setLayout(new BoxLayout(contentPanel, BoxLayout.Y_AXIS));
 
-        Dimension textFieldSize = null;
         for (int i = 0; i < 4; i++) {
             JTextField textField = new JTextField(10);
             Box childPanel = Box.createHorizontalBox();
