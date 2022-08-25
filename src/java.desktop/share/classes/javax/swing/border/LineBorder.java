@@ -192,7 +192,7 @@ public class LineBorder extends AbstractBorder
                 ytranslation = roundDown(at.getScaleY() * y + at.getTranslateY());
                 w = roundDown(at.getScaleX() * width);
                 h = roundDown(at.getScaleY() * height);
-                offs = roundDown(this.thickness * at.getScaleX());
+                offs = this.thickness * (int) at.getScaleX();//roundDown(this.thickness * at.getScaleX());
             }
             else
             {
