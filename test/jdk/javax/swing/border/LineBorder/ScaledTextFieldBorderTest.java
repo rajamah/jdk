@@ -21,9 +21,12 @@
  * questions.
  */
 
-import javax.imageio.ImageIO;
-import javax.swing.*;
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.Graphics2D;
+import java.awt.Point;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
@@ -31,6 +34,16 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+
+import javax.imageio.ImageIO;
+import javax.swing.Box;
+import javax.swing.BoxLayout;
+import javax.swing.JFrame;
+import javax.swing.JPanel;
+import javax.swing.JTextField;
+import javax.swing.SwingUtilities;
+import javax.swing.UIManager;
+import javax.swing.UnsupportedLookAndFeelException;
 
 /*
  * @test
@@ -65,6 +78,13 @@ public class ScaledTextFieldBorderTest {
     }
 
     private static void testScaling(boolean showFrame, boolean saveImages) {
+        try {
+            UIManager.setLookAndFeel("com.sun.java.swing.plaf.windows.WindowsLookAndFeel");
+        } catch (ClassNotFoundException | InstantiationException
+                 | IllegalAccessException | UnsupportedLookAndFeelException e) {
+            throw new RuntimeException(e);
+        }
+
         createGUI(showFrame, saveImages);
 
         String errorMessage = null;
@@ -81,7 +101,7 @@ public class ScaledTextFieldBorderTest {
                     int y = (int) (p.y * scaling) + SIZE.height / 2;
                     checkHorizontalBorder(y, thickness, img);
                 }
-            } catch (Error e) {
+            } catch (Error | Exception e) {
                 if (errorMessage == null) {
                     errorMessage = e.getMessage();
                 }
@@ -94,6 +114,7 @@ public class ScaledTextFieldBorderTest {
                 if (!saveImages) {
                     saveImage(img, getImageFileName(scaling));
                 }
+                break;
             }
         }
 
@@ -132,6 +153,7 @@ public class ScaledTextFieldBorderTest {
         int y = yStart;
         do {
             do {
+                System.out.println(x + ", " + y);
                 int color = img.getRGB(x, y);
                 if (color == BORDER_COLOR.getRGB()) {
                     if (borderThickness < 0) {
