@@ -44,6 +44,7 @@ import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 import javax.swing.UnsupportedLookAndFeelException;
+import javax.swing.border.LineBorder;
 
 /*
  * @test
@@ -141,41 +142,95 @@ public class ScaledTextFieldBorderTest {
                     thickness, img);
     }
 
+    private enum State {
+        BACKGROUND, LEFT, INSIDE, RIGHT
+    };
+
+    private static final int transparentColor = 0x00000000;
+    private static int panelColor;
+    private static int borderColor;
+    private static int insideColor;
+
     private static void checkBorder(final int xStart, final int yStart,
                                     final int xStep,  final int yStep,
                                     final int thickness,
                                     final BufferedImage img) {
         final int width = img.getWidth();
         final int height = img.getHeight();
+
+        State state = State.BACKGROUND;
         int borderThickness = -1;
 
         int x = xStart;
         int y = yStart;
         do {
             do {
-                int color = img.getRGB(x, y);
-                if (color == BORDER_COLOR.getRGB()) {
-                    if (borderThickness < 0) {
-                        borderThickness = 1;
-                    } else {
-                        borderThickness++;
-                    }
-                } else {
-                    if (borderThickness > 0) {
-                        if (borderThickness != thickness) {
-                            throw new Error(
-                                    String.format("Wrong border thickness at %d, %d: %d vs %d",
-                                            x, y, borderThickness, thickness));
+                final int color = img.getRGB(x, y);
+                switch (state) {
+                    case BACKGROUND:
+                        if (color == borderColor) {
+                            state = State.LEFT;
+                            borderThickness = 1;
+                        } else if (color != panelColor
+                                   && color != transparentColor) {
+                            throwUnexpectedColor(x, y, color);
                         }
-                        borderThickness = 0;
-                    }
+                        break;
+
+                    case LEFT:
+                        if (color == borderColor) {
+                            borderThickness++;
+                        } else if (color == insideColor) {
+                            if (borderThickness != thickness) {
+                                throwWrongThickness(thickness, borderThickness, x, y);
+                            }
+                            state = State.INSIDE;
+                            borderThickness = 0;
+                        } else {
+                            throwUnexpectedColor(x, y, color);
+                        }
+                        break;
+
+                    case INSIDE:
+                        if (color == borderColor) {
+                            state = State.RIGHT;
+                            borderThickness = 1;
+                        } else if (color != insideColor) {
+                            throwUnexpectedColor(x, y, color);
+                        }
+                        break;
+
+                    case RIGHT:
+                        if (color == borderColor) {
+                            borderThickness++;
+                        } else if (color == panelColor) {
+                            if (borderThickness != thickness) {
+                                throwWrongThickness(thickness, borderThickness, x, y);
+                            }
+                            state = State.BACKGROUND;
+                            borderThickness = 0;
+                        } else {
+                            throwUnexpectedColor(x, y, color);
+                        }
                 }
             } while (yStep > 0 && ((y += yStep) < height));
         } while (xStep > 0 && ((x += xStep) < width));
 
-        if (borderThickness < 0) {
-            throw new Error(String.format("No border found at %d, %d", x, y));
+        if (state != State.BACKGROUND) {
+            throw new Error(String.format("Border is not rendered correctly at %d, %d", x, y));
         }
+    }
+
+    private static void throwWrongThickness(int thickness, int borderThickness, int x, int y) {
+        throw new Error(
+                String.format("Wrong border thickness at %d, %d: %d vs %d",
+                              x, y, borderThickness, thickness));
+    }
+
+    private static void throwUnexpectedColor(int x, int y, int color) {
+        throw new Error(
+                String.format("Unexpected color at %d, %d: %08x",
+                              x, y, color));
     }
 
     private static void createGUI(boolean showFrame, boolean saveImages) {
@@ -193,6 +248,8 @@ public class ScaledTextFieldBorderTest {
             contentPanel.add(childPanel);
             if (textFieldSize == null) {
                 textFieldSize = textField.getPreferredSize();
+                borderColor = ((LineBorder) textField.getBorder()).getLineColor().getRGB();
+                insideColor = textField.getBackground().getRGB();
             }
             textField.setBounds(i, 0, textFieldSize.width, textFieldSize.height);
             childPanel.setBounds(0, (textFieldSize.height + 4) * i,
@@ -201,6 +258,8 @@ public class ScaledTextFieldBorderTest {
 
         contentPanel.setSize(textFieldSize.width + 4,
                              (textFieldSize.height + 4) * 4);
+
+        panelColor = contentPanel.getBackground().getRGB();
 
         for (double scaling : scales) {
             // Create BufferedImage
