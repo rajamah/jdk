@@ -55,7 +55,6 @@ import javax.swing.border.LineBorder;
  */
 
 public class ScaledTextFieldBorderTest {
-    private static final Color BORDER_COLOR = Color.BLACK;
 
     private static final double[] scales = {
             1.00, 1.25, 1.50, 1.75,
