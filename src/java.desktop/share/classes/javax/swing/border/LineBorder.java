@@ -168,11 +168,11 @@ public class LineBorder extends AbstractBorder
             // skip resetting the transform
             resetTransform = (at.getShearX() == 0) && (at.getShearY() == 0);
 
-            int xtranslation = 0;
-            int ytranslation = 0;
-            int w=0;
-            int h=0;
-            int offs = 0;
+            int xtranslation;
+            int ytranslation;
+            int w;
+            int h;
+            int offs;
 
             if (resetTransform) {
                 /* Deactivate the HiDPI scaling transform so we can do paint operations in the device
