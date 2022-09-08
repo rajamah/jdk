@@ -162,37 +162,28 @@ public class LineBorder extends AbstractBorder
             boolean resetTransform = false;
 
             Color oldColor = g2d.getColor();
-
             g2d.setColor(this.lineColor);
 
             // if m01 or m10 is non-zero, then there is a rotation or shear
             // skip resetting the transform
             resetTransform = (at.getShearX() == 0) && (at.getShearY() == 0);
 
-            if (resetTransform) {
-                /* Deactivate the HiDPI scaling transform so we can do paint operations in the device
-                pixel coordinate system instead of in the logical coordinate system.
-                */
-
-                g2d.setTransform(new AffineTransform());
-            }
-
-
             int xtranslation = 0;
             int ytranslation = 0;
             int w=0;
             int h=0;
             int offs = 0;
-            Shape outer;
-            Shape inner;
-
 
             if (resetTransform) {
+                /* Deactivate the HiDPI scaling transform so we can do paint operations in the device
+                pixel coordinate system instead of in the logical coordinate system.
+                */
+                g2d.setTransform(new AffineTransform());
                 xtranslation = roundDown(at.getScaleX() * x + at.getTranslateX());
                 ytranslation = roundDown(at.getScaleY() * y + at.getTranslateY());
                 w = roundDown(at.getScaleX() * width);
                 h = roundDown(at.getScaleY() * height);
-                offs = this.thickness * (int) at.getScaleX();//roundDown(this.thickness * at.getScaleX());
+                offs = this.thickness * (int) at.getScaleX();
             }
             else
             {
@@ -206,7 +197,11 @@ public class LineBorder extends AbstractBorder
 
             g2d.translate(xtranslation, ytranslation);
 
+            Shape outer;
+            Shape inner;
+
             int size = offs + offs;
+
             if (this.roundedCorners) {
                 float arc = .2f * offs;
                 outer = new RoundRectangle2D.Float(x, y, w, h, offs, offs);
