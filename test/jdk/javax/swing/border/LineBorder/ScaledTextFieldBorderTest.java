@@ -22,7 +22,6 @@
  */
 
 import java.awt.BorderLayout;
-import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Graphics2D;
@@ -48,12 +47,12 @@ import javax.swing.border.LineBorder;
 
 /*
  * @test
- * @bug 8279614
- * @summary The left line of the TitledBorder is not painted on 150 scale factor
+ * @bug 8282958
+ * @summary Verify all the borders are rendered consistently for a JTextField
+ *          in Windows LaF which uses LineBorder
  * @requires (os.family == "windows")
- * @run main ScaledEtchedBorderTest
+ * @run main ScaledTextFieldBorderTest
  */
-
 public class ScaledTextFieldBorderTest {
 
     private static final double[] scales = {
