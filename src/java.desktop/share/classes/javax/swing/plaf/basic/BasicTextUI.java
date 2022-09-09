@@ -663,6 +663,18 @@ public abstract class BasicTextUI extends TextUI implements ViewFactory {
     }
 
     /**
+     * Round the double to nearest integer, make sure we round to lower integer value for 0.5
+     *
+     * @param d number to be rounded
+     * @return a {@code int} which is the rounded value of provided number
+     */
+    private static int roundDown(double d)
+    {
+        double decP = (Math.ceil(d) - d);
+        return (int)((decP == 0.5) ?  Math.floor(d) :  Math.round(d));
+    }
+
+    /**
      * Paints a background for the view.  This will only be
      * called if isOpaque() on the associated component is
      * true.  The default is to paint the background color
@@ -671,8 +683,57 @@ public abstract class BasicTextUI extends TextUI implements ViewFactory {
      * @param g the graphics context
      */
     protected void paintBackground(Graphics g) {
-        g.setColor(editor.getBackground());
-        g.fillRect(0, 0, editor.getWidth(), editor.getHeight());
+
+        Boolean fixinBG = Boolean.parseBoolean(System.getenv("fixinBG"));
+
+        if(fixinBG) {
+            Graphics2D g2d = (Graphics2D) g;
+
+            AffineTransform at = g2d.getTransform();
+            boolean resetTransform = false;
+
+            // if m01 or m10 is non-zero, then there is a rotation or shear
+            // skip resetting the transform
+            resetTransform = (at.getShearX() == 0) && (at.getShearY() == 0);
+
+            int xtranslation = 0;
+            int ytranslation = 0;
+            int w = editor.getWidth();
+            int h = editor.getHeight();
+
+            if (resetTransform) {
+
+                /* Deactivate the HiDPI scaling transform so we can do paint operations in the device
+                pixel coordinate system instead of in the logical coordinate system.
+                */
+                g2d.setTransform(new AffineTransform());
+
+                w = roundDown(at.getScaleX() * w);
+                h = roundDown(at.getScaleY() * h);
+                xtranslation = roundDown(at.getTranslateX());
+                ytranslation = roundDown(at.getTranslateY());
+            }
+
+
+            g2d.translate(xtranslation, ytranslation);
+
+
+            g.setColor(editor.getBackground());
+            g.fillRect(0, 0, w, h);
+
+
+            g2d.translate(-xtranslation, -ytranslation);
+
+            if (resetTransform) {
+                g2d.setTransform(at);
+            }
+
+        }
+        else
+        {
+            g.setColor(editor.getBackground());
+            g.fillRect(0, 0, editor.getWidth(), editor.getHeight());
+        }
     }
 
     /**
@@ -716,18 +777,6 @@ public abstract class BasicTextUI extends TextUI implements ViewFactory {
     }
 
     /**
-     * Round the double to nearest integer, make sure we round to lower integer value for 0.5
-     *
-     * @param d number to be rounded
-     * @return a {@code int} which is the rounded value of provided number
-     */
-    private static int roundDown(double d)
-    {
-        double decP = (Math.ceil(d) - d);
-        return (int)((decP == 0.5) ?  Math.floor(d) :  Math.round(d));
-    }
-
-    /**
      * Paints the interface safely with a guarantee that
      * the model won't change from the view of this thread.
      * This does the following things, rendering from
@@ -751,53 +800,66 @@ public abstract class BasicTextUI extends TextUI implements ViewFactory {
         painted = true;
         Highlighter highlighter = editor.getHighlighter();
         Caret caret = editor.getCaret();
-        Graphics2D g2d = (Graphics2D) g;
 
-        AffineTransform at = g2d.getTransform();
-        boolean resetTransform = false;
+        Boolean fixinBG = Boolean.parseBoolean(System.getenv("fixinBG"));
 
-        // if m01 or m10 is non-zero, then there is a rotation or shear
-        // skip resetting the transform
-        resetTransform = (at.getShearX() == 0) && (at.getShearY() == 0);
-        if (resetTransform) {
-            /* Deactivate the HiDPI scaling transform so we can do paint operations in the device
-            pixel coordinate system instead of in the logical coordinate system.
-            */
-            g2d.setTransform(new AffineTransform());
+        if(!fixinBG) {
+            Graphics2D g2d = (Graphics2D) g;
+
+            AffineTransform at = g2d.getTransform();
+            boolean resetTransform = false;
+
+            // if m01 or m10 is non-zero, then there is a rotation or shear
+            // skip resetting the transform
+            resetTransform = (at.getShearX() == 0) && (at.getShearY() == 0);
+            if (resetTransform) {
+                /* Deactivate the HiDPI scaling transform so we can do paint operations in the device
+                 pixel coordinate system instead of in the logical coordinate system.
+                */
+                g2d.setTransform(new AffineTransform());
+            }
+
+
+            int oldWidth = editor.getWidth();
+            int oldHeight = editor.getHeight();
+
+            int xtranslation = 0;
+            int ytranslation = 0;
+            int w = oldWidth;
+            int h = oldHeight;
+
+
+            if (resetTransform) {
+                w = roundDown(at.getScaleX() * w);
+                h = roundDown(at.getScaleY() * h);
+                xtranslation = roundDown(at.getTranslateX());
+                ytranslation = roundDown(at.getTranslateY());
+            }
+
+
+            g2d.translate(xtranslation, ytranslation);
+
+            editor.setSize(w, h);
+
+            // paint the background
+            if (editor.isOpaque()) {
+                paintBackground(g);
+            }
+
+            g2d.translate(-xtranslation, -ytranslation);
+
+            if(resetTransform) {
+                g2d.setTransform(at);
+                editor.setSize(oldWidth, oldHeight);
+            }
+
         }
 
-
-        int oldWidth = editor.getWidth();
-        int oldHeight = editor.getHeight();
-
-        int xtranslation = 0;
-        int ytranslation = 0;
-        int w = oldWidth;
-        int h = oldHeight;
-
-
-        if (resetTransform) {
-            w = roundDown(at.getScaleX() * w);
-            h = roundDown(at.getScaleY() * h);
-            xtranslation = roundDown(at.getTranslateX());
-            ytranslation = roundDown(at.getTranslateY());
-        }
-
-
-        g2d.translate(xtranslation, ytranslation);
-
-        editor.setSize(w, h);
-
-        // paint the background
-        if (editor.isOpaque()) {
-            paintBackground(g);
-        }
-
-        g2d.translate(-xtranslation, -ytranslation);
-
-        if(resetTransform) {
-            g2d.setTransform(at);
-            editor.setSize(oldWidth, oldHeight);
+        else {
+            // paint the background
+            if (editor.isOpaque()) {
+                paintBackground(g);
+            }
         }
 
         // paint the highlights
