@@ -683,56 +683,39 @@ public abstract class BasicTextUI extends TextUI implements ViewFactory {
      * @param g the graphics context
      */
     protected void paintBackground(Graphics g) {
+        Graphics2D g2d = (Graphics2D) g;
 
-        Boolean fixinBG = Boolean.parseBoolean(System.getenv("fixinBG"));
+        AffineTransform at = g2d.getTransform();
 
-        if(fixinBG) {
-            Graphics2D g2d = (Graphics2D) g;
+        // if m01 or m10 is non-zero, then there is a rotation or shear
+        // skip resetting the transform
+        boolean resetTransform = (at.getShearX() == 0) && (at.getShearY() == 0);
 
-            AffineTransform at = g2d.getTransform();
-            boolean resetTransform = false;
+        int xtranslation = 0;
+        int ytranslation = 0;
+        int w = editor.getWidth();
+        int h = editor.getHeight();
 
-            // if m01 or m10 is non-zero, then there is a rotation or shear
-            // skip resetting the transform
-            resetTransform = (at.getShearX() == 0) && (at.getShearY() == 0);
+        if (resetTransform) {
+            g2d.setTransform(new AffineTransform());
 
-            int xtranslation = 0;
-            int ytranslation = 0;
-            int w = editor.getWidth();
-            int h = editor.getHeight();
-
-            if (resetTransform) {
-
-                /* Deactivate the HiDPI scaling transform so we can do paint operations in the device
-                pixel coordinate system instead of in the logical coordinate system.
-                */
-                g2d.setTransform(new AffineTransform());
-
-                w = roundDown(at.getScaleX() * w);
-                h = roundDown(at.getScaleY() * h);
-                xtranslation = roundDown(at.getTranslateX());
-                ytranslation = roundDown(at.getTranslateY());
-            }
-
-
-            g2d.translate(xtranslation, ytranslation);
-
-
-            g.setColor(editor.getBackground());
-            g.fillRect(0, 0, w, h);
-
-
-            g2d.translate(-xtranslation, -ytranslation);
-
-            if (resetTransform) {
-                g2d.setTransform(at);
-            }
-
+            w = roundDown(at.getScaleX() * w);
+            h = roundDown(at.getScaleY() * h);
+            xtranslation = roundDown(at.getTranslateX());
+            ytranslation = roundDown(at.getTranslateY());
         }
-        else
-        {
-            g.setColor(editor.getBackground());
-            g.fillRect(0, 0, editor.getWidth(), editor.getHeight());
+
+
+        g2d.translate(xtranslation, ytranslation);
+
+
+        g.setColor(editor.getBackground());
+        g.fillRect(0, 0, w, h);
+
+
+        g2d.translate(-xtranslation, -ytranslation);
+        if (resetTransform) {
+            g2d.setTransform(at);
         }
     }
 
@@ -801,65 +784,9 @@ public abstract class BasicTextUI extends TextUI implements ViewFactory {
         Highlighter highlighter = editor.getHighlighter();
         Caret caret = editor.getCaret();
 
-        Boolean fixinBG = Boolean.parseBoolean(System.getenv("fixinBG"));
-
-        if(!fixinBG) {
-            Graphics2D g2d = (Graphics2D) g;
-
-            AffineTransform at = g2d.getTransform();
-            boolean resetTransform = false;
-
-            // if m01 or m10 is non-zero, then there is a rotation or shear
-            // skip resetting the transform
-            resetTransform = (at.getShearX() == 0) && (at.getShearY() == 0);
-            if (resetTransform) {
-                /* Deactivate the HiDPI scaling transform so we can do paint operations in the device
-                 pixel coordinate system instead of in the logical coordinate system.
-                */
-                g2d.setTransform(new AffineTransform());
-            }
-
-
-            int oldWidth = editor.getWidth();
-            int oldHeight = editor.getHeight();
-
-            int xtranslation = 0;
-            int ytranslation = 0;
-            int w = oldWidth;
-            int h = oldHeight;
-
-
-            if (resetTransform) {
-                w = roundDown(at.getScaleX() * w);
-                h = roundDown(at.getScaleY() * h);
-                xtranslation = roundDown(at.getTranslateX());
-                ytranslation = roundDown(at.getTranslateY());
-            }
-
-
-            g2d.translate(xtranslation, ytranslation);
-
-            editor.setSize(w, h);
-
-            // paint the background
-            if (editor.isOpaque()) {
-                paintBackground(g);
-            }
-
-            g2d.translate(-xtranslation, -ytranslation);
-
-            if(resetTransform) {
-                g2d.setTransform(at);
-                editor.setSize(oldWidth, oldHeight);
-            }
-
-        }
-
-        else {
-            // paint the background
-            if (editor.isOpaque()) {
-                paintBackground(g);
-            }
+        // paint the background
+        if (editor.isOpaque()) {
+            paintBackground(g);
         }
 
         // paint the highlights
