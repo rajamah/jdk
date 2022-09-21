@@ -22,7 +22,6 @@
  */
 
 import java.awt.BorderLayout;
-import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Graphics2D;
@@ -36,34 +35,40 @@ import java.util.Collection;
 import java.util.List;
 
 import javax.imageio.ImageIO;
-import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
+import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
+import javax.swing.UIManager;
+import javax.swing.UnsupportedLookAndFeelException;
+import javax.swing.border.LineBorder;
 
 /*
  * @test
- * @bug 8279614
- * @summary The left line of the TitledBorder is not painted on 150 scale factor
+ * @bug 8282958
+ * @summary Verify all the borders are rendered consistently for a JTextField
+ *          in Windows LaF which uses LineBorder
  * @requires (os.family == "windows")
- * @run main ScaledEtchedBorderTest
+ * @run main ScaledTextFieldBorderTest
  */
+public class ScaledTextFieldBorderTest {
 
-public class ScaledLineBorderTest {
-    public static final Dimension SIZE = new Dimension(125, 25);
-
-    public static final Color COLOR = Color.BLACK;
-
-    private static final double[] scales =
-            {1.00, 1.25, 1.50, 1.75, 2.00, 2.50, 3.00};
+    private static final double[] scales = {
+            1.00, 1.25, 1.50, 1.75,
+            2.00, 2.25, 2.50, 2.75,
+            3.00,
+            1.33
+    };
 
     private static final List<BufferedImage> images =
             new ArrayList<>(scales.length);
 
     private static final List<Point> panelLocations =
             new ArrayList<>(4);
+
+    private static Dimension textFieldSize;
 
     public static void main(String[] args) throws Exception {
         Collection<String> params = Arrays.asList(args);
@@ -73,6 +78,13 @@ public class ScaledLineBorderTest {
     }
 
     private static void testScaling(boolean showFrame, boolean saveImages) {
+        try {
+            UIManager.setLookAndFeel("com.sun.java.swing.plaf.windows.WindowsLookAndFeel");
+        } catch (ClassNotFoundException | InstantiationException
+                 | IllegalAccessException | UnsupportedLookAndFeelException e) {
+            throw new RuntimeException(e);
+        }
+
         createGUI(showFrame, saveImages);
 
         String errorMessage = null;
@@ -83,13 +95,13 @@ public class ScaledLineBorderTest {
             try {
                 int thickness = (int) Math.floor(scaling);
 
-                checkVerticalBorders(SIZE.width / 2, thickness, img);
+                checkVerticalBorders(textFieldSize.width / 2, thickness, img);
 
                 for (Point p : panelLocations) {
-                    int y = (int) (p.y * scaling) + SIZE.height / 2;
+                    int y = (int) (p.y * scaling) + textFieldSize.height / 2;
                     checkHorizontalBorder(y, thickness, img);
                 }
-            } catch (Error e) {
+            } catch (Error | Exception e) {
                 if (errorMessage == null) {
                     errorMessage = e.getMessage();
                 }
@@ -128,31 +140,95 @@ public class ScaledLineBorderTest {
                     thickness, img);
     }
 
+    private enum State {
+        BACKGROUND, LEFT, INSIDE, RIGHT
+    };
+
+    private static final int transparentColor = 0x00000000;
+    private static int panelColor;
+    private static int borderColor;
+    private static int insideColor;
+
     private static void checkBorder(final int xStart, final int yStart,
                                     final int xStep,  final int yStep,
                                     final int thickness,
                                     final BufferedImage img) {
         final int width = img.getWidth();
         final int height = img.getHeight();
-        int borderThickness = 0;
+
+        State state = State.BACKGROUND;
+        int borderThickness = -1;
 
         int x = xStart;
         int y = yStart;
         do {
             do {
-                int color = img.getRGB(x, y);
-                if (color == COLOR.getRGB()) {
-                    borderThickness++;
-                } else {
-                    if (borderThickness > 0 && borderThickness != thickness) {
-                        throw new Error(
-                                String.format("Wrong border thickness at %d, %d: %d vs %d",
-                                              x, y, borderThickness, thickness));
-                    }
-                    borderThickness = 0;
+                final int color = img.getRGB(x, y);
+                switch (state) {
+                    case BACKGROUND:
+                        if (color == borderColor) {
+                            state = State.LEFT;
+                            borderThickness = 1;
+                        } else if (color != panelColor
+                                   && color != transparentColor) {
+                            throwUnexpectedColor(x, y, color);
+                        }
+                        break;
+
+                    case LEFT:
+                        if (color == borderColor) {
+                            borderThickness++;
+                        } else if (color == insideColor) {
+                            if (borderThickness != thickness) {
+                                throwWrongThickness(thickness, borderThickness, x, y);
+                            }
+                            state = State.INSIDE;
+                            borderThickness = 0;
+                        } else {
+                            throwUnexpectedColor(x, y, color);
+                        }
+                        break;
+
+                    case INSIDE:
+                        if (color == borderColor) {
+                            state = State.RIGHT;
+                            borderThickness = 1;
+                        } else if (color != insideColor) {
+                            throwUnexpectedColor(x, y, color);
+                        }
+                        break;
+
+                    case RIGHT:
+                        if (color == borderColor) {
+                            borderThickness++;
+                        } else if (color == panelColor) {
+                            if (borderThickness != thickness) {
+                                throwWrongThickness(thickness, borderThickness, x, y);
+                            }
+                            state = State.BACKGROUND;
+                            borderThickness = 0;
+                        } else {
+                            throwUnexpectedColor(x, y, color);
+                        }
                 }
             } while (yStep > 0 && ((y += yStep) < height));
         } while (xStep > 0 && ((x += xStep) < width));
+
+        if (state != State.BACKGROUND) {
+            throw new Error(String.format("Border is not rendered correctly at %d, %d", x, y));
+        }
+    }
+
+    private static void throwWrongThickness(int thickness, int borderThickness, int x, int y) {
+        throw new Error(
+                String.format("Wrong border thickness at %d, %d: %d vs %d",
+                              x, y, borderThickness, thickness));
+    }
+
+    private static void throwUnexpectedColor(int x, int y, int color) {
+        throw new Error(
+                String.format("Unexpected color at %d, %d: %08x",
+                              x, y, color));
     }
 
     private static void createGUI(boolean showFrame, boolean saveImages) {
@@ -160,22 +236,28 @@ public class ScaledLineBorderTest {
         JPanel contentPanel = new JPanel();
         contentPanel.setLayout(new BoxLayout(contentPanel, BoxLayout.Y_AXIS));
 
-        Dimension childSize = null;
         for (int i = 0; i < 4; i++) {
-            JPanel childPanel = new JPanel(new BorderLayout());
-            childPanel.setBorder(BorderFactory.createCompoundBorder(
-                    BorderFactory.createEmptyBorder(0, i, 4, 4),
-                    BorderFactory.createLineBorder(COLOR)));
-            childPanel.add(Box.createRigidArea(SIZE), BorderLayout.CENTER);
+            JTextField textField = new JTextField(10);
+            Box childPanel = Box.createHorizontalBox();
+            childPanel.add(Box.createHorizontalStrut(i));
+            childPanel.add(textField);
+            childPanel.add(Box.createHorizontalStrut(4));
 
             contentPanel.add(childPanel);
-            if (childSize == null) {
-                childSize = childPanel.getPreferredSize();
+            if (textFieldSize == null) {
+                textFieldSize = textField.getPreferredSize();
+                borderColor = ((LineBorder) textField.getBorder()).getLineColor().getRGB();
+                insideColor = textField.getBackground().getRGB();
             }
-            childPanel.setBounds(0, childSize.height * i, childSize.width, childSize.height);
+            textField.setBounds(i, 0, textFieldSize.width, textFieldSize.height);
+            childPanel.setBounds(0, (textFieldSize.height + 4) * i,
+                                 textFieldSize.width + i + 4, textFieldSize.height);
         }
 
-        contentPanel.setSize(childSize.width, childSize.height * 4);
+        contentPanel.setSize(textFieldSize.width + 4,
+                             (textFieldSize.height + 4) * 4);
+
+        panelColor = contentPanel.getBackground().getRGB();
 
         for (double scaling : scales) {
             // Create BufferedImage
@@ -201,7 +283,7 @@ public class ScaledLineBorderTest {
         }
 
         if (showFrame) {
-            JFrame frame = new JFrame("Scaled Etched Border Test");
+            JFrame frame = new JFrame("Text Field Border Test");
             frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
             frame.getContentPane().add(contentPanel, BorderLayout.CENTER);
             frame.pack();
