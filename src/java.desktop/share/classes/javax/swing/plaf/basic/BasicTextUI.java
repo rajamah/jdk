@@ -684,8 +684,6 @@ public abstract class BasicTextUI extends TextUI implements ViewFactory {
      */
     protected void paintBackground(Graphics g) {
 
-        Boolean fixinBG = Boolean.parseBoolean(System.getenv("fixinBG"));
-
         Graphics2D g2d = (Graphics2D) g;
 
         AffineTransform at = g2d.getTransform();
@@ -794,9 +792,6 @@ public abstract class BasicTextUI extends TextUI implements ViewFactory {
         painted = true;
         Highlighter highlighter = editor.getHighlighter();
         Caret caret = editor.getCaret();
-
-        Boolean fixinBG = Boolean.parseBoolean(System.getenv("fixinBG"));
-
 
         // paint the background
         if (editor.isOpaque()) {
