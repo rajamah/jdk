@@ -48,7 +48,7 @@ import javax.swing.SwingUtilities;
  * @bug 8279614
  * @summary The left line of the TitledBorder is not painted on 150 scale factor
  * @requires (os.family == "windows")
- * @run main ScaledEtchedBorderTest
+ * @run main ScaledLineBorderTest
  */
 
 public class ScaledLineBorderTest {
