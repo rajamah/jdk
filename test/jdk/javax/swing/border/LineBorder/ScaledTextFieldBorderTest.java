@@ -22,6 +22,7 @@
  */
 
 import java.awt.BorderLayout;
+import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Graphics2D;
@@ -41,8 +42,6 @@ import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
-import javax.swing.UIManager;
-import javax.swing.UnsupportedLookAndFeelException;
 import javax.swing.border.LineBorder;
 
 /*
@@ -78,13 +77,6 @@ public class ScaledTextFieldBorderTest {
     }
 
     private static void testScaling(boolean showFrame, boolean saveImages) {
-        try {
-            UIManager.setLookAndFeel("com.sun.java.swing.plaf.windows.WindowsLookAndFeel");
-        } catch (ClassNotFoundException | InstantiationException
-                 | IllegalAccessException | UnsupportedLookAndFeelException e) {
-            throw new RuntimeException(e);
-        }
-
         createGUI(showFrame, saveImages);
 
         String errorMessage = null;
@@ -142,7 +134,7 @@ public class ScaledTextFieldBorderTest {
 
     private enum State {
         BACKGROUND, LEFT, INSIDE, RIGHT
-    };
+    }
 
     private static final int transparentColor = 0x00000000;
     private static int panelColor;
@@ -236,8 +228,11 @@ public class ScaledTextFieldBorderTest {
         JPanel contentPanel = new JPanel();
         contentPanel.setLayout(new BoxLayout(contentPanel, BoxLayout.Y_AXIS));
 
+        final LineBorder tfBorder = new LineBorder(Color.RED);
+
         for (int i = 0; i < 4; i++) {
             JTextField textField = new JTextField(10);
+            textField.setBorder(tfBorder);
             Box childPanel = Box.createHorizontalBox();
             childPanel.add(Box.createHorizontalStrut(i));
             childPanel.add(textField);
@@ -246,7 +241,7 @@ public class ScaledTextFieldBorderTest {
             contentPanel.add(childPanel);
             if (textFieldSize == null) {
                 textFieldSize = textField.getPreferredSize();
-                borderColor = ((LineBorder) textField.getBorder()).getLineColor().getRGB();
+                borderColor = tfBorder.getLineColor().getRGB();
                 insideColor = textField.getBackground().getRGB();
             }
             textField.setBounds(i, 0, textFieldSize.width, textFieldSize.height);
