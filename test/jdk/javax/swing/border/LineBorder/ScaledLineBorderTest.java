@@ -38,7 +38,7 @@ import java.util.List;
 import javax.imageio.ImageIO;
 import javax.swing.BorderFactory;
 import javax.swing.Box;
-import javax.swing.BoxLayout;
+import javax.swing.JComponent;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
@@ -52,9 +52,12 @@ import javax.swing.SwingUtilities;
  */
 
 public class ScaledLineBorderTest {
-    public static final Dimension SIZE = new Dimension(125, 25);
+    private static final Dimension SIZE = new Dimension(125, 25);
 
-    public static final Color COLOR = Color.BLACK;
+    private static final Color OUTER_COLOR = Color.BLACK;
+    private static final Color BORDER_COLOR = Color.RED;
+    private static final Color INSIDE_COLOR = Color.WHITE;
+    private static final Color TRANSPARENT_COLOR = new Color(0x00000000, true);
 
     private static final double[] scales =
             {1.00, 1.25, 1.50, 1.75, 2.00, 2.50, 3.00};
@@ -134,43 +137,105 @@ public class ScaledLineBorderTest {
                                     final BufferedImage img) {
         final int width = img.getWidth();
         final int height = img.getHeight();
+
+        State state = State.BACKGROUND;
         int borderThickness = 0;
 
         int x = xStart;
         int y = yStart;
         do {
             do {
-                int color = img.getRGB(x, y);
-                if (color == COLOR.getRGB()) {
-                    borderThickness++;
-                } else {
-                    if (borderThickness > 0 && borderThickness != thickness) {
-                        throw new Error(
-                                String.format("Wrong border thickness at %d, %d: %d vs %d",
-                                              x, y, borderThickness, thickness));
-                    }
-                    borderThickness = 0;
+                final int color = img.getRGB(x, y);
+                switch (state) {
+                    case BACKGROUND:
+                        if (color == BORDER_COLOR.getRGB()) {
+                            state = State.LEFT;
+                            borderThickness = 1;
+                        } else if (color != OUTER_COLOR.getRGB()
+                                   && color != TRANSPARENT_COLOR.getRGB()) {
+                            throwUnexpectedColor(x, y, color);
+                        }
+                        break;
+
+                    case LEFT:
+                        if (color == BORDER_COLOR.getRGB()) {
+                            borderThickness++;
+                        } else if (color == INSIDE_COLOR.getRGB()) {
+                            if (borderThickness != thickness) {
+                                throwWrongThickness(thickness, borderThickness, x, y);
+                            }
+                            state = State.INSIDE;
+                            borderThickness = 0;
+                        } else {
+                            throwUnexpectedColor(x, y, color);
+                        }
+                        break;
+
+                    case INSIDE:
+                        if (color == BORDER_COLOR.getRGB()) {
+                            state = State.RIGHT;
+                            borderThickness = 1;
+                        } else if (color != INSIDE_COLOR.getRGB()) {
+                            throwUnexpectedColor(x, y, color);
+                        }
+                        break;
+
+                    case RIGHT:
+                        if (color == BORDER_COLOR.getRGB()) {
+                            borderThickness++;
+                        } else if (color == OUTER_COLOR.getRGB()) {
+                            if (borderThickness != thickness) {
+                                throwWrongThickness(thickness, borderThickness, x, y);
+                            }
+                            state = State.BACKGROUND;
+                            borderThickness = 0;
+                        } else {
+                            throwUnexpectedColor(x, y, color);
+                        }
                 }
             } while (yStep > 0 && ((y += yStep) < height));
         } while (xStep > 0 && ((x += xStep) < width));
     }
 
+    private enum State {
+        BACKGROUND, LEFT, INSIDE, RIGHT
+    }
+
+    private static void throwWrongThickness(int thickness, int borderThickness,
+                                            int x, int y) {
+        throw new Error(
+                String.format("Wrong border thickness at %d, %d: %d vs %d",
+                              x, y, borderThickness, thickness));
+    }
+
+    private static void throwUnexpectedColor(int x, int y, int color) {
+        throw new Error(
+                String.format("Unexpected color at %d, %d: %08x",
+                              x, y, color));
+    }
+
     private static void createGUI(boolean showFrame, boolean saveImages) {
         // Render content panel
-        JPanel contentPanel = new JPanel();
-        contentPanel.setLayout(new BoxLayout(contentPanel, BoxLayout.Y_AXIS));
+        Box contentPanel = Box.createVerticalBox();
+        contentPanel.setBackground(OUTER_COLOR);
 
         Dimension childSize = null;
         for (int i = 0; i < 4; i++) {
+            JComponent filler = new JPanel(null);
+            filler.setBackground(INSIDE_COLOR);
+            filler.setPreferredSize(SIZE);
+            filler.setBounds(i, 0, SIZE.width, SIZE.height);
+            filler.setBorder(BorderFactory.createLineBorder(BORDER_COLOR));
+
             JPanel childPanel = new JPanel(new BorderLayout());
-            childPanel.setBorder(BorderFactory.createCompoundBorder(
-                    BorderFactory.createEmptyBorder(0, i, 4, 4),
-                    BorderFactory.createLineBorder(COLOR)));
-            childPanel.add(Box.createRigidArea(SIZE), BorderLayout.CENTER);
+            childPanel.setBorder(BorderFactory.createEmptyBorder(0, i, 4, 4));
+            childPanel.add(filler, BorderLayout.CENTER);
+            childPanel.setBackground(OUTER_COLOR);
 
             contentPanel.add(childPanel);
             if (childSize == null) {
                 childSize = childPanel.getPreferredSize();
+                System.out.println(childSize);
             }
             childPanel.setBounds(0, childSize.height * i, childSize.width, childSize.height);
         }
