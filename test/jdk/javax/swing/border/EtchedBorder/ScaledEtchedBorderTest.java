@@ -59,6 +59,7 @@ public class ScaledEtchedBorderTest {
     private static final Color INSIDE_COLOR = Color.WHITE;
     public static final Color HIGHLIGHT = Color.RED;
     public static final Color SHADOW = Color.BLUE;
+    private static final Color TRANSPARENT_COLOR = new Color(0x00000000, true);
 
     private static final double[] scales =
             {1.00, 1.25, 1.50, 1.75, 2.00, 2.50, 3.00};
@@ -138,43 +139,113 @@ public class ScaledEtchedBorderTest {
                                     final BufferedImage img) {
         final int width = img.getWidth();
         final int height = img.getHeight();
-        int shadow = 0;
-        int highlight = 0;
+
+        State state = State.BACKGROUND;
+        int borderThickness = 0;
 
         int x = xStart;
         int y = yStart;
         do {
             do {
-                int color = img.getRGB(x, y);
-                if (color == SHADOW.getRGB()) {
-                    shadow++;
-                } else if (color == HIGHLIGHT.getRGB()) {
-                    if (highlight == 0) {
-                        if (shadow != thickness) {
-                            throw new Error(
-                                    String.format("Wrong shadow thickness at %d, %d: %d vs %d",
-                                                  x, y, shadow, thickness));
+                final int color = img.getRGB(x, y);
+                switch (state) {
+                    case BACKGROUND:
+                        if (color == SHADOW.getRGB()) {
+                            state = State.LEFT_SHADOW;
+                            borderThickness = 1;
+                        } else if (color != OUTER_COLOR.getRGB()
+                                   && color != TRANSPARENT_COLOR.getRGB()) {
+                            throwUnexpectedColor(x, y, color);
                         }
-                        shadow = 0;
-                    }
-                    highlight++;
-                } else {
-                    if (shadow > 0) {
-                        throw new Error(
-                                String.format("Background color after shadow at %d, %d",
-                                              x, y));
-                    }
-                    if (highlight > 0) {
-                        if (highlight != thickness) {
-                            throw new Error(
-                                    String.format("Wrong highlight thickness at %d, %d: %d vs %d",
-                                                  x, y, highlight, thickness));
+                        break;
+
+                    case LEFT_SHADOW:
+                        if (color == SHADOW.getRGB()) {
+                            borderThickness++;
+                        } else if (color == HIGHLIGHT.getRGB()) {
+                            if (borderThickness != thickness) {
+                                throwWrongThickness(thickness, borderThickness, x, y);
+                            }
+                            borderThickness = 1;
+                            state = State.LEFT_HIGHLIGHT;
+                        } else {
+                            throwUnexpectedColor(x, y, color);
                         }
-                        highlight = 0;
-                    }
+                        break;
+
+                    case LEFT_HIGHLIGHT:
+                        if (color == HIGHLIGHT.getRGB()) {
+                            borderThickness++;
+                        } else if (color == INSIDE_COLOR.getRGB()) {
+                            if (borderThickness != thickness) {
+                                throwWrongThickness(thickness, borderThickness, x, y);
+                            }
+                            borderThickness = 0;
+                            state = State.INSIDE;
+                        } else {
+                            throwUnexpectedColor(x, y, color);
+                        }
+                        break;
+
+                    case INSIDE:
+                        if (color == SHADOW.getRGB()) {
+                            state = State.RIGHT_SHADOW;
+                            borderThickness = 1;
+                        } else if (color != INSIDE_COLOR.getRGB()) {
+                            throwUnexpectedColor(x, y, color);
+                        }
+                        break;
+
+                    case RIGHT_SHADOW:
+                        if (color == SHADOW.getRGB()) {
+                            borderThickness++;
+                        } else if (color == HIGHLIGHT.getRGB()) {
+                            if (borderThickness != thickness) {
+                                throwWrongThickness(thickness, borderThickness, x, y);
+                            }
+                            borderThickness = 1;
+                            state = State.RIGHT_HIGHLIGHT;
+                        } else {
+                            throwUnexpectedColor(x, y, color);
+                        }
+                        break;
+
+                    case RIGHT_HIGHLIGHT:
+                        if (color == HIGHLIGHT.getRGB()) {
+                            borderThickness++;
+                        } else if (color == OUTER_COLOR.getRGB()) {
+                            if (borderThickness != thickness) {
+                                throwWrongThickness(thickness, borderThickness, x, y);
+                            }
+                            borderThickness = 0;
+                            state = State.BACKGROUND;
+                        } else {
+                            throwUnexpectedColor(x, y, color);
+                        }
+                        break;
                 }
             } while (yStep > 0 && ((y += yStep) < height));
         } while (xStep > 0 && ((x += xStep) < width));
+    }
+
+    private enum State {
+        BACKGROUND,
+        LEFT_SHADOW, LEFT_HIGHLIGHT,
+        INSIDE,
+        RIGHT_SHADOW, RIGHT_HIGHLIGHT
+    }
+
+    private static void throwWrongThickness(int thickness, int borderThickness,
+                                            int x, int y) {
+        throw new Error(
+                String.format("Wrong border thickness at %d, %d: %d vs %d",
+                              x, y, borderThickness, thickness));
+    }
+
+    private static void throwUnexpectedColor(int x, int y, int color) {
+        throw new Error(
+                String.format("Unexpected color at %d, %d: %08x",
+                              x, y, color));
     }
 
     private static void createGUI(boolean showFrame, boolean saveImages) {
