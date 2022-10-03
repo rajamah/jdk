@@ -38,7 +38,7 @@ import java.util.List;
 import javax.imageio.ImageIO;
 import javax.swing.BorderFactory;
 import javax.swing.Box;
-import javax.swing.BoxLayout;
+import javax.swing.JComponent;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
@@ -55,6 +55,8 @@ public class ScaledEtchedBorderTest {
 
     public static final Dimension SIZE = new Dimension(125, 25);
 
+    private static final Color OUTER_COLOR = Color.BLACK;
+    private static final Color INSIDE_COLOR = Color.WHITE;
     public static final Color HIGHLIGHT = Color.RED;
     public static final Color SHADOW = Color.BLUE;
 
@@ -177,16 +179,21 @@ public class ScaledEtchedBorderTest {
 
     private static void createGUI(boolean showFrame, boolean saveImages) {
         // Render content panel
-        JPanel contentPanel = new JPanel();
-        contentPanel.setLayout(new BoxLayout(contentPanel, BoxLayout.Y_AXIS));
+        Box contentPanel = Box.createVerticalBox();
+        contentPanel.setBackground(OUTER_COLOR);
 
         Dimension childSize = null;
         for (int i = 0; i < 4; i++) {
+            JComponent filler = new JPanel(null);
+            filler.setBackground(INSIDE_COLOR);
+            filler.setPreferredSize(SIZE);
+            filler.setBounds(i, 0, SIZE.width, SIZE.height);
+            filler.setBorder(BorderFactory.createEtchedBorder(HIGHLIGHT, SHADOW));
+
             JPanel childPanel = new JPanel(new BorderLayout());
-            childPanel.setBorder(BorderFactory.createCompoundBorder(
-                    BorderFactory.createEmptyBorder(0, i, 4, 4),
-                    BorderFactory.createEtchedBorder(HIGHLIGHT, SHADOW)));
-            childPanel.add(Box.createRigidArea(SIZE), BorderLayout.CENTER);
+            childPanel.setBorder(BorderFactory.createEmptyBorder(0, i, 4, 4));
+            childPanel.add(filler, BorderLayout.CENTER);
+            childPanel.setBackground(OUTER_COLOR);
 
             contentPanel.add(childPanel);
             if (childSize == null) {
