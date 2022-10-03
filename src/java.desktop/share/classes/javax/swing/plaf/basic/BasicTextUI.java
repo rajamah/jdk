@@ -696,6 +696,9 @@ public abstract class BasicTextUI extends TextUI implements ViewFactory {
         int w = editor.getWidth();
         int h = editor.getHeight();
 
+        g.setColor(Color.CYAN);
+        g.fillRect(0, 0, w, h);
+
         if (resetTransform) {
             g2d.setTransform(new AffineTransform());
 
