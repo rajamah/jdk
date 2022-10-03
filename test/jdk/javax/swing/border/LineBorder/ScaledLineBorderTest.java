@@ -45,14 +45,13 @@ import javax.swing.SwingUtilities;
 
 /*
  * @test
- * @bug 8279614
- * @summary The left line of the TitledBorder is not painted on 150 scale factor
+ * @bug 8282958
+ * @summary Verify LineBorder edges have the same width
  * @requires (os.family == "windows")
- * @run main ScaledEtchedBorderTest
+ * @run main ScaledLineBorderTest
  */
-
 public class ScaledLineBorderTest {
-    private static final Dimension SIZE = new Dimension(125, 25);
+    private static final Dimension SIZE = new Dimension(120, 25);
 
     private static final Color OUTER_COLOR = Color.BLACK;
     private static final Color BORDER_COLOR = Color.RED;
