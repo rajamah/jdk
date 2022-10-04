@@ -159,14 +159,15 @@ public class LineBorder extends AbstractBorder
             Graphics2D g2d = (Graphics2D) g;
 
             AffineTransform at = g2d.getTransform();;
-            boolean resetTransform = false;
 
             Color oldColor = g2d.getColor();
             g2d.setColor(this.lineColor);
 
             // if m01 or m10 is non-zero, then there is a rotation or shear
+            // or if no Scaling enabled,
             // skip resetting the transform
-            resetTransform = (at.getShearX() == 0) && (at.getShearY() == 0);
+            boolean resetTransform = ((at.getShearX() == 0) && (at.getShearY() == 0)) &&
+                                     ((at.getScaleX() > 1) || (at.getScaleY() > 1));
 
             int xtranslation;
             int ytranslation;
@@ -204,21 +205,22 @@ public class LineBorder extends AbstractBorder
 
             if (this.roundedCorners) {
                 float arc = .2f * offs;
-                outer = new RoundRectangle2D.Float(x, y, w, h, offs, offs);
-                inner = new RoundRectangle2D.Float(x + offs, y + offs, w - size, h - size, arc, arc);
+                outer = new RoundRectangle2D.Float(0, 0, w, h, offs, offs);
+                inner = new RoundRectangle2D.Float(offs, offs, w - size, h - size, arc, arc);
             }
             else {
-                outer = new Rectangle2D.Float(x, y, w, h);
-                inner = new Rectangle2D.Float(x + offs, y + offs, w - size, h - size);
+                outer = new Rectangle2D.Float(0, 0, w, h);
+                inner = new Rectangle2D.Float(offs, offs, w - size, h - size);
             }
             Path2D path = new Path2D.Float(Path2D.WIND_EVEN_ODD);
             path.append(outer, false);
             path.append(inner, false);
             g2d.fill(path);
 
+
+            // Reset to original values
             g2d.translate(-xtranslation, -ytranslation);
 
-            // Set the transform we removed earlier
             if (resetTransform) {
                 g2d.setColor(oldColor);
                 g2d.setTransform(at);

@@ -686,12 +686,15 @@ public abstract class BasicTextUI extends TextUI implements ViewFactory {
 
         Graphics2D g2d = (Graphics2D) g;
 
+        Color oldColor = g.getColor();
+
         AffineTransform at = g2d.getTransform();
-        boolean resetTransform = false;
 
         // if m01 or m10 is non-zero, then there is a rotation or shear
+        // or if no Scaling enabled,
         // skip resetting the transform
-        resetTransform = (at.getShearX() == 0) && (at.getShearY() == 0);
+        boolean resetTransform = ((at.getShearX() == 0) && (at.getShearY() == 0)) &&
+                                 ((at.getScaleX() > 1) || (at.getScaleY() > 1));
 
         int xtranslation = 0;
         int ytranslation = 0;
@@ -699,6 +702,14 @@ public abstract class BasicTextUI extends TextUI implements ViewFactory {
         int h = editor.getHeight();
 
         if (resetTransform) {
+
+            // Set Parent Background color for Textfield.
+            // This is done as a workaround to correctly paint pixels left
+            // after reduced width of the textfield background due to re-scaling.
+
+            g.setColor(editor.getParent().getBackground());
+            g.fillRect(0, 0, editor.getWidth(), editor.getHeight());
+
 
             /* Deactivate the HiDPI scaling transform so we can do paint operations in the device
             pixel coordinate system instead of in the logical coordinate system.
@@ -709,6 +720,7 @@ public abstract class BasicTextUI extends TextUI implements ViewFactory {
             h = roundDown(at.getScaleY() * h);
             xtranslation = roundDown(at.getTranslateX());
             ytranslation = roundDown(at.getTranslateY());
+
         }
 
 
@@ -719,10 +731,12 @@ public abstract class BasicTextUI extends TextUI implements ViewFactory {
         g.fillRect(0, 0, w, h);
 
 
+        // Reset to original values
         g2d.translate(-xtranslation, -ytranslation);
 
         if (resetTransform) {
             g2d.setTransform(at);
+            g.setColor(oldColor);
         }
 
 
