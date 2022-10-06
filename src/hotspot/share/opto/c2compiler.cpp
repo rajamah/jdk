@@ -24,6 +24,7 @@
 
 #include "precompiled.hpp"
 #include "classfile/vmClasses.hpp"
+#include "compiler/compilerDefinitions.inline.hpp"
 #include "runtime/handles.inline.hpp"
 #include "jfr/support/jfrIntrinsics.hpp"
 #include "opto/c2compiler.hpp"
@@ -541,8 +542,14 @@ bool C2Compiler::is_intrinsic_supported(const methodHandle& method, bool is_virt
   case vmIntrinsics::_floatIsInfinite:
     if (!Matcher::match_rule_supported(Op_IsInfiniteF)) return false;
     break;
+  case vmIntrinsics::_floatIsFinite:
+    if (!Matcher::match_rule_supported(Op_IsFiniteF)) return false;
+    break;
   case vmIntrinsics::_doubleIsInfinite:
     if (!Matcher::match_rule_supported(Op_IsInfiniteD)) return false;
+    break;
+  case vmIntrinsics::_doubleIsFinite:
+    if (!Matcher::match_rule_supported(Op_IsFiniteD)) return false;
     break;
   case vmIntrinsics::_hashCode:
   case vmIntrinsics::_identityHashCode:
@@ -738,7 +745,6 @@ bool C2Compiler::is_intrinsic_supported(const methodHandle& method, bool is_virt
   case vmIntrinsics::_Preconditions_checkIndex:
   case vmIntrinsics::_Preconditions_checkLongIndex:
   case vmIntrinsics::_getObjectSize:
-  case vmIntrinsics::_Continuation_doYield:
     break;
 
   case vmIntrinsics::_VectorCompressExpand:
