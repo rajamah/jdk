@@ -267,11 +267,11 @@ public class ScaledLineBorderTest {
     private static void paintToImages(final JComponent content,
                                       final boolean saveImages) {
         for (double scaling : scales) {
-            // Create BufferedImage
             BufferedImage image =
                     new BufferedImage((int) Math.ceil(content.getWidth() * scaling),
                                       (int) Math.ceil(content.getHeight() * scaling),
                                       BufferedImage.TYPE_INT_ARGB);
+
             Graphics2D g2d = image.createGraphics();
             g2d.scale(scaling, scaling);
             content.paint(g2d);
