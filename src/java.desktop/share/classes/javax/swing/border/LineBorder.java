@@ -36,6 +36,8 @@ import java.awt.geom.RoundRectangle2D;
 import java.beans.ConstructorProperties;
 import java.awt.geom.AffineTransform;
 
+import static sun.java2d.pipe.Region.clipRound;
+
 /**
  * A class which implements a line border of arbitrary thickness
  * and of a single color.
@@ -131,18 +133,6 @@ public class LineBorder extends AbstractBorder
     }
 
     /**
-     * Round the double to nearest integer, make sure we round to lower integer value for 0.5
-     *
-     * @param d number to be rounded
-     * @return a {@code int} which is the rounded value of provided number
-     */
-    private static int roundDown(double d)
-    {
-        double decP = (Math.ceil(d) - d);
-        return (int)((decP == 0.5) ?  Math.floor(d) :  Math.round(d));
-    }
-
-    /**
      * Paints the border for the specified component with the
      * specified position and size.
      *
@@ -181,10 +171,10 @@ public class LineBorder extends AbstractBorder
                 g2d.setTransform(new AffineTransform());
                 double xx = at.getScaleX() * x + at.getTranslateX();
                 double yy = at.getScaleY() * y + at.getTranslateY();
-                xtranslation = roundDown(xx);
-                ytranslation = roundDown(yy);
-                w = roundDown(at.getScaleX() * width + xx) - xtranslation;
-                h = roundDown(at.getScaleY() * height + yy) - ytranslation;
+                xtranslation = clipRound(xx);
+                ytranslation = clipRound(yy);
+                w = clipRound(at.getScaleX() * width + xx) - xtranslation;
+                h = clipRound(at.getScaleY() * height + yy) - ytranslation;
                 offs = this.thickness * (int) at.getScaleX();
             }
             else
