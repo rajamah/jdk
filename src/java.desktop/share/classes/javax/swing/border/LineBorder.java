@@ -186,9 +186,6 @@ public class LineBorder extends AbstractBorder
                 w = roundDown(at.getScaleX() * width + xx) - xtranslation;
                 h = roundDown(at.getScaleY() * height + yy) - ytranslation;
                 offs = this.thickness * (int) at.getScaleX();
-                System.out.printf("LineBorder.paintBorder: %dx%d -> %dx%d\n",
-                                  width, height,
-                                  w, h);
             }
             else
             {
