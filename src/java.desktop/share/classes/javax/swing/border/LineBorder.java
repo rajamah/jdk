@@ -145,13 +145,9 @@ public class LineBorder extends AbstractBorder
      */
     public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
         if ((this.thickness > 0) && (g instanceof Graphics2D)) {
-
             Graphics2D g2d = (Graphics2D) g;
 
-            AffineTransform at = g2d.getTransform();;
-
-            Color oldColor = g2d.getColor();
-            g2d.setColor(this.lineColor);
+            AffineTransform at = g2d.getTransform();
 
             // if m01 or m10 is non-zero, then there is a rotation or shear
             // or if no Scaling enabled,
@@ -166,9 +162,10 @@ public class LineBorder extends AbstractBorder
             int offs;
 
             if (resetTransform) {
-                /* Deactivate the HiDPI scaling transform so we can do paint operations in the device
-                pixel coordinate system instead of in the logical coordinate system.
-                */
+                /* Deactivate the HiDPI scaling transform,
+                 * so we can do paint operations in the device
+                 * pixel coordinate system instead of the logical coordinate system.
+                 */
                 g2d.setTransform(new AffineTransform());
                 double xx = at.getScaleX() * x + at.getTranslateX();
                 double yy = at.getScaleY() * y + at.getTranslateY();
@@ -177,24 +174,23 @@ public class LineBorder extends AbstractBorder
                 w = clipRound(at.getScaleX() * width + xx) - xtranslation;
                 h = clipRound(at.getScaleY() * height + yy) - ytranslation;
                 offs = this.thickness * (int) at.getScaleX();
-            }
-            else
-            {
+            } else {
                 w = width;
                 h = height;
                 xtranslation = x;
                 ytranslation = y;
                 offs = this.thickness;
-
             }
 
             g2d.translate(xtranslation, ytranslation);
+
+            Color oldColor = g2d.getColor();
+            g2d.setColor(this.lineColor);
 
             Shape outer;
             Shape inner;
 
             int size = offs + offs;
-
             if (this.roundedCorners) {
                 float arc = .2f * offs;
                 outer = new RoundRectangle2D.Float(0, 0, w, h, offs, offs);
@@ -208,13 +204,11 @@ public class LineBorder extends AbstractBorder
             path.append(outer, false);
             path.append(inner, false);
             g2d.fill(path);
+            g2d.setColor(oldColor);
 
-
-            // Reset to original values
             g2d.translate(-xtranslation, -ytranslation);
 
             if (resetTransform) {
-                g2d.setColor(oldColor);
                 g2d.setTransform(at);
             }
         }
