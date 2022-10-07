@@ -234,7 +234,6 @@ public class ScaledLineBorderTest {
             contentPanel.add(childPanel);
             if (childSize == null) {
                 childSize = childPanel.getPreferredSize();
-                System.out.println(childSize);
             }
             childPanel.setBounds(0, childSize.height * i, childSize.width, childSize.height);
         }
