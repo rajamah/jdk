@@ -702,12 +702,15 @@ public abstract class BasicTextUI extends TextUI implements ViewFactory {
         if (resetTransform) {
             g2d.setTransform(new AffineTransform());
 
-            w = roundDown(at.getScaleX() * w);
-            h = roundDown(at.getScaleY() * h);
             xtranslation = roundDown(at.getTranslateX());
             ytranslation = roundDown(at.getTranslateY());
+            w = roundDown(at.getScaleX() * w + at.getTranslateX()) - xtranslation;
+            h = roundDown(at.getScaleY() * h + at.getTranslateY()) - ytranslation;
         }
 
+        System.out.printf("BasicTextUI.paintBackground: %dx%d -> %dx%d\n",
+                          editor.getWidth(), editor.getHeight(),
+                          w, h);
 
         g2d.translate(xtranslation, ytranslation);
 

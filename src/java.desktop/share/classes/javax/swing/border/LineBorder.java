@@ -179,11 +179,16 @@ public class LineBorder extends AbstractBorder
                 pixel coordinate system instead of in the logical coordinate system.
                 */
                 g2d.setTransform(new AffineTransform());
-                xtranslation = roundDown(at.getScaleX() * x + at.getTranslateX());
-                ytranslation = roundDown(at.getScaleY() * y + at.getTranslateY());
-                w = roundDown(at.getScaleX() * width);
-                h = roundDown(at.getScaleY() * height);
+                double xx = at.getScaleX() * x + at.getTranslateX();
+                double yy = at.getScaleY() * y + at.getTranslateY();
+                xtranslation = roundDown(xx);
+                ytranslation = roundDown(yy);
+                w = roundDown(at.getScaleX() * width + xx) - xtranslation;
+                h = roundDown(at.getScaleY() * height + yy) - ytranslation;
                 offs = this.thickness * (int) at.getScaleX();
+                System.out.printf("LineBorder.paintBorder: %dx%d -> %dx%d\n",
+                                  width, height,
+                                  w, h);
             }
             else
             {
