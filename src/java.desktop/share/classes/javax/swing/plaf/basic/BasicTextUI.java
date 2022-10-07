@@ -24,8 +24,6 @@
  */
 package javax.swing.plaf.basic;
 
-import java.awt.geom.AffineTransform;
-import java.awt.geom.Dimension2D;
 import java.util.*;
 import java.awt.*;
 import java.awt.event.*;
@@ -663,18 +661,6 @@ public abstract class BasicTextUI extends TextUI implements ViewFactory {
     }
 
     /**
-     * Round the double to nearest integer, make sure we round to lower integer value for 0.5
-     *
-     * @param d number to be rounded
-     * @return a {@code int} which is the rounded value of provided number
-     */
-    private static int roundDown(double d)
-    {
-        double decP = (Math.ceil(d) - d);
-        return (int)((decP == 0.5) ?  Math.floor(d) :  Math.round(d));
-    }
-
-    /**
      * Paints a background for the view.  This will only be
      * called if isOpaque() on the associated component is
      * true.  The default is to paint the background color
@@ -683,46 +669,8 @@ public abstract class BasicTextUI extends TextUI implements ViewFactory {
      * @param g the graphics context
      */
     protected void paintBackground(Graphics g) {
-        Graphics2D g2d = (Graphics2D) g;
-
-        AffineTransform at = g2d.getTransform();
-
-        // if m01 or m10 is non-zero, then there is a rotation or shear
-        // skip resetting the transform
-        boolean resetTransform = (at.getShearX() == 0) && (at.getShearY() == 0);
-
-        int xtranslation = 0;
-        int ytranslation = 0;
-        int w = editor.getWidth();
-        int h = editor.getHeight();
-
-        g.setColor(Color.CYAN);
-        g.fillRect(0, 0, w, h);
-
-        if (resetTransform) {
-            g2d.setTransform(new AffineTransform());
-
-            xtranslation = roundDown(at.getTranslateX());
-            ytranslation = roundDown(at.getTranslateY());
-            w = roundDown(at.getScaleX() * w + at.getTranslateX()) - xtranslation;
-            h = roundDown(at.getScaleY() * h + at.getTranslateY()) - ytranslation;
-        }
-
-        System.out.printf("BasicTextUI.paintBackground: %dx%d -> %dx%d\n",
-                          editor.getWidth(), editor.getHeight(),
-                          w, h);
-
-        g2d.translate(xtranslation, ytranslation);
-
-
         g.setColor(editor.getBackground());
-        g.fillRect(0, 0, w, h);
-
-
-        g2d.translate(-xtranslation, -ytranslation);
-        if (resetTransform) {
-            g2d.setTransform(at);
-        }
+        g.fillRect(0, 0, editor.getWidth(), editor.getHeight());
     }
 
     /**
