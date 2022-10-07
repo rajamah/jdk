@@ -75,8 +75,16 @@ public class ScaledLineBorderTest {
     }
 
     private static void testScaling(boolean showFrame, boolean saveImages) {
-        createGUI(showFrame, saveImages);
+        JComponent content = createUI();
+        if (showFrame) {
+            showFrame(content);
+        }
 
+        paintToImages(content, saveImages);
+        verifyBorderRendering(saveImages);
+    }
+
+    private static void verifyBorderRendering(final boolean saveImages) {
         String errorMessage = null;
         int errorCount = 0;
         for (int i = 0; i < images.size(); i++) {
@@ -213,8 +221,7 @@ public class ScaledLineBorderTest {
                               x, y, color));
     }
 
-    private static void createGUI(boolean showFrame, boolean saveImages) {
-        // Render content panel
+    private static JComponent createUI() {
         Box contentPanel = Box.createVerticalBox();
         contentPanel.setBackground(OUTER_COLOR);
 
@@ -240,36 +247,40 @@ public class ScaledLineBorderTest {
 
         contentPanel.setSize(childSize.width, childSize.height * 4);
 
-        for (double scaling : scales) {
-            // Create BufferedImage
-            BufferedImage image =
-                    new BufferedImage((int) Math.ceil(contentPanel.getWidth() * scaling),
-                                      (int) Math.ceil(contentPanel.getHeight() * scaling),
-                                      BufferedImage.TYPE_INT_ARGB);
-            Graphics2D graph = image.createGraphics();
-            graph.scale(scaling, scaling);
-            // Painting panel onto BufferedImage
-            contentPanel.paint(graph);
-            graph.dispose();
-
-            if (saveImages) {
-                saveImage(image, getImageFileName(scaling));
-            }
-            images.add(image);
-        }
-
         // Save coordinates of the panels
         for (Component comp : contentPanel.getComponents()) {
             panelLocations.add(comp.getLocation());
         }
 
-        if (showFrame) {
-            JFrame frame = new JFrame("Scaled Etched Border Test");
-            frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-            frame.getContentPane().add(contentPanel, BorderLayout.CENTER);
-            frame.pack();
-            frame.setLocationRelativeTo(null);
-            frame.setVisible(true);
+        return contentPanel;
+    }
+
+    private static void showFrame(JComponent content) {
+        JFrame frame = new JFrame("Scaled Etched Border Test");
+        frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+        frame.getContentPane().add(content, BorderLayout.CENTER);
+        frame.pack();
+        frame.setLocationRelativeTo(null);
+        frame.setVisible(true);
+    }
+
+    private static void paintToImages(final JComponent content,
+                                      final boolean saveImages) {
+        for (double scaling : scales) {
+            // Create BufferedImage
+            BufferedImage image =
+                    new BufferedImage((int) Math.ceil(content.getWidth() * scaling),
+                                      (int) Math.ceil(content.getHeight() * scaling),
+                                      BufferedImage.TYPE_INT_ARGB);
+            Graphics2D g2d = image.createGraphics();
+            g2d.scale(scaling, scaling);
+            content.paint(g2d);
+            g2d.dispose();
+
+            if (saveImages) {
+                saveImage(image, getImageFileName(scaling));
+            }
+            images.add(image);
         }
     }
 
