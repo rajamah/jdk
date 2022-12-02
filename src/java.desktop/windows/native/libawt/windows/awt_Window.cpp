@@ -3637,6 +3637,7 @@ int getSystemMetricValue(int msgType) {
         HWND hWnd = ::GetDesktopWindow();
         HDC hDC = ::GetDC(hWnd);
         dpi = GetDeviceCaps(hDC, logPixels);
+        printf("\n@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@DPI / Logical Pixels: %d\n", dpi);
         ::ReleaseDC(hWnd, hDC);
     }
     if(dpi != 0 && dpi != 96) {

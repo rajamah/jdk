@@ -55,7 +55,11 @@ import sun.awt.windows.ThemeReader;
 import sun.security.action.GetPropertyAction;
 import sun.swing.CachedPainter;
 
+import java.awt.geom.AffineTransform;
+
 import static com.sun.java.swing.plaf.windows.TMSchema.*;
+
+import java.lang.Math;
 
 
 /**
@@ -660,6 +664,29 @@ class XPStyle {
             super.flush();
         }
 
+        double correctScaledValues(double d)
+        {
+            double intP = Math.floor(d);
+            double decP = d - intP;
+            double retVal =d;
+
+            if ((decP >= 0.25) && (decP < 0.5))
+            {
+                retVal = intP + 0.25;
+            }
+            else if ((decP >= 0.5) && (decP < 0.75))
+            {
+                retVal = intP + 0.5;
+            }
+            else if ((decP >= 0.75) && (decP < 1.0))
+            {
+                retVal = intP + 0.75;
+            }
+
+            return retVal;
+
+        }
+        
         protected void paintToImage(Component c, Image image, Graphics g,
                                     int w, int h, Object[] args) {
             Skin skin = (Skin)args[0];
@@ -675,6 +702,10 @@ class XPStyle {
             w = bi.getWidth();
             h = bi.getHeight();
 
+            Graphics2D g2d = (Graphics2D) g;
+            AffineTransform  at = g2d.getTransform();
+            int dpi = (int)(correctScaledValues(at.getScaleX()) * 96);
+
             WritableRaster raster = bi.getRaster();
             DataBufferInt dbi = (DataBufferInt)raster.getDataBuffer();
             // Note that stealData() requires a markDirty() afterwards
@@ -682,7 +713,8 @@ class XPStyle {
             ThemeReader.paintBackground(SunWritableRaster.stealData(dbi, 0),
                                         part.getControlName(c), part.getValue(),
                                         State.getValue(part, state),
-                                        0, 0, w, h, w);
+                                        0, 0, w, h, w, dpi);
+
             SunWritableRaster.markDirty(dbi);
         }
 

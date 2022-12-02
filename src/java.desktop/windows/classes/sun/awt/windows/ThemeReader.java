@@ -44,7 +44,11 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
  */
 public final class ThemeReader {
 
+    private static int currentDPI = 96;
+
     private static final Map<String, Long> widgetToTheme = new HashMap<>();
+
+    private static final Map<Long, Integer> dpiForTheme = new HashMap<>();
 
     // lock for the cache
     // reading should be done with readLock
@@ -83,18 +87,20 @@ public final class ThemeReader {
     // this should be called only with writeLock held
     private static Long getThemeImpl(String widget) {
         Long theme = widgetToTheme.get(widget);
-        if (theme == null) {
+        int dpi = currentDPI;
+        if (theme == null || (dpi != dpiForTheme.get(theme))) {
             int i = widget.indexOf("::");
             if (i > 0) {
                 // We're using the syntax "subAppName::controlName" here, as used by msstyles.
                 // See documentation for SetWindowTheme on MSDN.
                 setWindowTheme(widget.substring(0, i));
-                theme = openTheme(widget.substring(i+2));
+                theme = openTheme(widget.substring(i+2), dpi);
                 setWindowTheme(null);
             } else {
-                theme = openTheme(widget);
+                theme = openTheme(widget, dpi);
             }
             widgetToTheme.put(widget, theme);
+            dpiForTheme.put(theme, Integer.valueOf(dpi));
         }
         return theme;
     }
@@ -115,6 +121,7 @@ public final class ThemeReader {
                         closeTheme(value);
                     }
                     widgetToTheme.clear();
+                    dpiForTheme.clear();
                     valid = true;
                 }
             } finally {
@@ -125,7 +132,9 @@ public final class ThemeReader {
 
         // mostly copied from the javadoc for ReentrantReadWriteLock
         Long theme = widgetToTheme.get(widget);
-        if (theme == null) {
+        int dpi = currentDPI;
+
+        if (theme == null ||  (dpi != dpiForTheme.get(theme))) {
             readLock.unlock();
             writeLock.lock();
             try {
@@ -143,9 +152,10 @@ public final class ThemeReader {
                                                int y, int w, int h, int stride);
 
     public static void paintBackground(int[] buffer, String widget,
-           int part, int state, int x, int y, int w, int h, int stride) {
+           int part, int state, int x, int y, int w, int h, int stride, int dpi) {
         readLock.lock();
         try {
+            currentDPI = dpi;
             paintBackground(buffer, getTheme(widget), part, state, x, y, w, h, stride);
         } finally {
             readLock.unlock();
@@ -261,18 +271,18 @@ public final class ThemeReader {
     }
 
     private static native Dimension getPartSize(long theme, int part,
-                                                int state);
+                                                int state, int dpi);
 
     public static Dimension getPartSize(String widget, int part, int state) {
         readLock.lock();
         try {
-            return getPartSize(getTheme(widget), part, state);
+            return getPartSize(getTheme(widget), part, state, currentDPI);
         } finally {
             readLock.unlock();
         }
     }
 
-    private static native long openTheme(String widget);
+    private static native long openTheme(String widget, int dpi);
 
     private static native void closeTheme(long theme);
 
