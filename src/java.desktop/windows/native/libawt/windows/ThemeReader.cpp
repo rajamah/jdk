@@ -154,11 +154,11 @@ BOOL InitThemes() {
 
         if(OpenThemeDataFuncForDpi)
         {
-            printf("Loaded OpenThemeDataForDpi \n");
+            //printf("Loaded OpenThemeDataForDpi \n");
         }
         else
         {
-           // printf("Failed to load OpenThemeDataForDpi: %x\n", dw);
+           // //printf("Failed to load OpenThemeDataForDpi: %x\n", dw);
         }
 
     }
@@ -227,7 +227,7 @@ BOOL InitThemes() {
               HTHEME hTheme = OpenThemeDataFuncForDpi (AwtToolkit::GetInstance().GetHWnd(), L"Button", dpi);
               if(hTheme) {
                   DTRACE_PRINTLN("Loaded Theme data.\n");
-                  printf("Loaded Theme data for Dpi \n");
+                  //printf("Loaded Theme data for Dpi \n");
                   CloseThemeDataFunc(hTheme);
                   return TRUE;
               }
@@ -304,29 +304,29 @@ JNIEXPORT jlong JNICALL Java_sun_awt_windows_ThemeReader_openTheme
     HTHEME htheme;
     unsigned int udpi = static_cast<unsigned int>(dpi);
 
-    printf("Java_sun_awt_windows_ThemeReader_openTheme() \n");
+    //printf("Java_sun_awt_windows_ThemeReader_openTheme() \n");
 
 
 
-    printf("DPI being passed in from Java side: %u\n", udpi);
+    //printf("DPI being passed in from Java side: %u\n", udpi);
 
     if (OpenThemeDataFuncForDpi) {
         htheme = OpenThemeDataFuncForDpi(AwtToolkit::GetInstance().GetHWnd(), str, dpi);
         if (htheme) {
             DTRACE_PRINTLN("Loaded Theme data.\n");
-            printf("hthemeforDPI: %p \n", reinterpret_cast <void*>(htheme));
+           // printf("hthemeforDPI: %p, DPI: %d, HWND: %p   \n", reinterpret_cast <void*>(htheme), dpi, reinterpret_cast <void*>(AwtToolkit::GetInstance().GetHWnd()));
         }
         else {
             //FreeLibrary(hModThemes);
             //hModThemes = NULL;
-            printf("hthemeforDPI NULL \n");
+            //printf("hthemeforDPI NULL \n");
             DTRACE_PRINTLN("DIDN'T Loaded Theme data.\n");
         }
     }
     else
     {
         htheme = OpenThemeDataFunc(AwtToolkit::GetInstance().GetHWnd(), str);
-        printf("Calling OpenThemeDataFunc() ???????? \n");
+        //printf("Calling OpenThemeDataFunc() ???????? \n");
     }
 
     JNU_ReleaseStringPlatformChars(env, widget, str);
@@ -800,19 +800,19 @@ JNIEXPORT jobject JNICALL Java_sun_awt_windows_ThemeReader_getPosition
 
 void rescale(SIZE *size, unsigned int dpi) {
 
-    printf("rescale -- DPI: %u \n", dpi);
+    //printf("rescale -- DPI: %u \n", dpi);
 
 
    // if (dpiX !=0 && dpiX != 96) {
         float invScaleX = 96.0f / dpi;
         size->cx = (int) round(size->cx * invScaleX);
 
-        printf("rescale -- size->cx: %d\n", size->cx);
+        //printf("rescale -- size->cx: %d\n", size->cx);
     //}
    // if (dpiY != 0 && dpiY != 96) {
         float invScaleY = 96.0f / dpi;
         size->cy = (int) round(size->cy * invScaleY);
-        printf("rescale -- size->cy: %d\n", size->cy);
+        //printf("rescale -- size->cy: %d\n", size->cy);
   //  }
 }
 
@@ -842,9 +842,9 @@ JNIEXPORT jobject JNICALL Java_sun_awt_windows_ThemeReader_getPartSize
                 CHECK_NULL_RETURN(dimMID, NULL);
             }
 
-            printf("Before rescale -- size->cx: %d\n", size.cx);
+            //printf("Before rescale -- size->cx: %d\n", size.cx);
             rescale(&size, static_cast<unsigned int>(dpi));
-            printf("After rescale -- size->cx: %d\n", size.cx);
+            //printf("After rescale -- size->cx: %d\n", size.cx);
             jobject dimObj = env->NewObject(dimClassID, dimMID, size.cx, size.cy);
             if (safe_ExceptionOccurred(env)) {
                 env->ExceptionDescribe();

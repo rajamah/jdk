@@ -119,7 +119,9 @@ public abstract class CachedPainter {
                            int baseWidth, int baseHeight,
                            int w, int h, Object... args) {
         GraphicsConfiguration config = getGraphicsConfiguration(c);
+      //  flush(); //ramahaja: always clear cache
         ImageCache cache = getCache(key);
+        cache.flush();  //ramahaja: always clear cache
         Image image = cache.getImage(key, config, w, h, args);
         int attempts = 0;
         VolatileImage volatileImage = (image instanceof VolatileImage)
