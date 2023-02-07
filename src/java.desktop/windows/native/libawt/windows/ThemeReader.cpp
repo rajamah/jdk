@@ -290,6 +290,7 @@ static void assert_result(HRESULT hres, JNIEnv *env) {
 JNIEXPORT jlong JNICALL Java_sun_awt_windows_ThemeReader_openTheme
 (JNIEnv* env, jclass klass, jstring widget, jint dpi) {
 
+    printf("DPI being passed in from Java side: %d\n", dpi);
     LPCTSTR str = (LPCTSTR)JNU_GetStringPlatformChars(env, widget, NULL);
     if (str == NULL) {
         JNU_ThrowOutOfMemoryError(env, 0);
@@ -822,7 +823,7 @@ void rescale(SIZE *size, unsigned int dpi) {
  * Signature: (JII)Ljava/awt/Dimension;
  */
 JNIEXPORT jobject JNICALL Java_sun_awt_windows_ThemeReader_getPartSize
-(JNIEnv *env, jclass klass, jlong theme, jint part, jint state, jint dpi) {
+(JNIEnv *env, jclass klass, jlong theme, jint part, jint state) {
     if (theme != NULL) {
         SIZE size;
 
@@ -842,8 +843,8 @@ JNIEXPORT jobject JNICALL Java_sun_awt_windows_ThemeReader_getPartSize
                 CHECK_NULL_RETURN(dimMID, NULL);
             }
 
-            //printf("Before rescale -- size->cx: %d\n", size.cx);
-            rescale(&size, static_cast<unsigned int>(dpi));
+            printf(" Part Size is: ->cx: %d\n", size.cx);
+           // rescale(&size, static_cast<unsigned int>(dpi));
             //printf("After rescale -- size->cx: %d\n", size.cx);
             jobject dimObj = env->NewObject(dimClassID, dimMID, size.cx, size.cy);
             if (safe_ExceptionOccurred(env)) {
