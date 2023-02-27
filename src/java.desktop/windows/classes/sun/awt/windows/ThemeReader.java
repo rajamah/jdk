@@ -191,7 +191,10 @@ public final class ThemeReader {
            int part, int state, int x, int y, int w, int h, int stride, int dpi) {
         readLock.lock();
         try {
-            paintBackground(buffer, getTheme(widget, dpi), part, state, x, y, w, h, stride);
+
+            Dimension d = getPartSize(getTheme(widget, dpi), part, state);
+            System.out.println(".... Java paint Background part width: " + (int)d.getWidth() + ", part Height: " + (int)d.getHeight());
+            paintBackground(buffer, getTheme(widget, dpi), part, state, /*x*/(int) d.getWidth() , /*y*/(int) d.getHeight() , w, h, stride);
         } finally {
             readLock.unlock();
         }

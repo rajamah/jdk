@@ -3091,6 +3091,28 @@ public final class SunGraphics2D
     }
 // end of text rendering methods
 
+    double correctScaledValues(double d)
+    {
+        double intP = Math.floor(d);
+        double decP = d - intP;
+        double retVal =d;
+
+        if ((decP >= 0.25) && (decP < 0.5))
+        {
+            retVal = intP + 0.25;
+        }
+        else if ((decP >= 0.5) && (decP < 0.75))
+        {
+            retVal = intP + 0.5;
+        }
+        else if ((decP >= 0.75) && (decP < 1.0))
+        {
+            retVal = intP + 0.75;
+        }
+
+        return retVal;
+
+    }
     private Boolean drawHiDPIImage(Image img,
                                    int dx1, int dy1, int dx2, int dy2,
                                    int sx1, int sy1, int sx2, int sy2,
@@ -3154,8 +3176,8 @@ public final class SunGraphics2D
 
                     if (0 < width && 0 < height && 0 < rvWidth && 0 < rvHeight) {
 
-                        double widthScale = ((double) rvWidth) / width;
-                        double heightScale = ((double) rvHeight) / height;
+                        double widthScale = correctScaledValues(((double) rvWidth) / width);
+                        double heightScale = correctScaledValues(((double) rvHeight) / height);
 
                         if (resolutionVariant instanceof VolatileImage) {
                             SurfaceData sd = SurfaceManager

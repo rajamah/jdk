@@ -271,6 +271,8 @@ Java_sun_java2d_loops_TransformHelper_Transform
      jint dx1, jint dy1, jint dx2, jint dy2,
      jintArray edgeArray, jint dxoff, jint dyoff)
 {
+
+    printf("... Java_sun_java2d_loops_TransformHelper_Transform ... \n");
     SurfaceDataOps *srcOps;
     SurfaceDataOps *dstOps;
     SurfaceDataRasInfo srcInfo;
@@ -555,6 +557,7 @@ Transform_SafeHelper(JNIEnv *env,
                      jint *pData, jint *pEdges,
                      jint dxoff, jint dyoff, jint sw, jint sh)
 {
+    printf("...Transform_SafeHelper\n");
     SurfaceDataBounds span;
     jint dx1, dx2;
     jint dy1, dy2;
@@ -575,6 +578,7 @@ Transform_SafeHelper(JNIEnv *env,
 
     Region_StartIteration(env, pClipInfo);
     while (Region_NextIteration(pClipInfo, &span)) {
+    printf("...Region_NextIteration\n");
         dy1 = span.y1;
         dy2 = span.y2;
         while (dy1 < dy2) {
@@ -582,6 +586,7 @@ Transform_SafeHelper(JNIEnv *env,
             dx2 = span.x2;
             i = (dy1 - pDstInfo->bounds.y1) * 2;
             while (dx1 < dx2) {
+                printf("...Transform_SafeHelper...x = dxoff + dx1 + 0.5\n");
                 jdouble x, y;
                 jlong xlong, ylong;
 

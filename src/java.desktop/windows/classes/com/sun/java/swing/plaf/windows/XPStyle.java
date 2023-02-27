@@ -689,6 +689,9 @@ class XPStyle {
         
         protected void paintToImage(Component c, Image image, Graphics g,
                                     int w, int h, Object[] args) {
+            int baseWidth =w; //
+
+
             Skin skin = (Skin)args[0];
             Part part = skin.part;
             State state = (State)args[1];
@@ -702,9 +705,14 @@ class XPStyle {
             w = bi.getWidth();
             h = bi.getHeight();
 
+            double scaleVal = (double) w / baseWidth;
+
+
             Graphics2D g2d = (Graphics2D) g;
             AffineTransform  at = g2d.getTransform();
             int dpi = (int)(correctScaledValues(at.getScaleX()) * 96);
+
+           // int dpi = (int)(correctScaledValues(scaleVal) * 96);
 
             WritableRaster raster = bi.getRaster();
             DataBufferInt dbi = (DataBufferInt)raster.getDataBuffer();

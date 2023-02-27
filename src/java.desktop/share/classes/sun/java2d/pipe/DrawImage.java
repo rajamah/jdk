@@ -738,6 +738,14 @@ public class DrawImage implements DrawImagePipe
         atfm.translate(dx1, dy1);
         double m00 = (double)(dx2-dx1)/(sx2-sx1);
         double m11 = (double)(dy2-dy1)/(sy2-sy1);
+
+        if(Boolean.parseBoolean(System.getenv("useEnvScale")))
+        {
+            m00 = Double.parseDouble(System.getenv("scalex"));//1/(sg.getTransform().getScaleX());
+            m11 = Double.parseDouble(System.getenv("scaley"));//1/(sg.getTransform().getScaleY());
+        }
+
+
         atfm.scale(m00, m11);
         atfm.translate(srcX-sx1, srcY-sy1);
 

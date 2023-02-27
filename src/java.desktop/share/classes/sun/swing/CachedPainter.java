@@ -115,6 +115,30 @@ public abstract class CachedPainter {
         }
     }
 
+    double correctScaledValues(double d)
+    {
+        double intP = Math.floor(d);
+        double decP = d - intP;
+        double retVal =d;
+
+        if ((decP >= 0.25) && (decP < 0.5))
+        {
+            retVal = intP + 0.25;
+        }
+        else if ((decP >= 0.5) && (decP < 0.75))
+        {
+            retVal = intP + 0.5;
+        }
+        else if ((decP >= 0.75) && (decP < 1.0))
+        {
+            retVal = intP + 0.75;
+        }
+
+        return retVal;
+
+    }
+
+
     private Image getImage(Object key, Component c,
                            int baseWidth, int baseHeight,
                            int w, int h, Object... args) {
@@ -171,8 +195,11 @@ public abstract class CachedPainter {
                 Graphics2D g2 = (Graphics2D) image.getGraphics();
                 if (volatileImage == null) {
                     if ((w != baseWidth || h != baseHeight)) {
-                        g2.scale((double) w / baseWidth,
-                                (double) h / baseHeight);
+
+                        double scaleX = correctScaledValues((double)w / baseWidth);
+                        double scaleY = correctScaledValues((double)h / baseHeight);
+
+                       g2.scale(scaleX, scaleY);
                     }
                     paintToImage(c, image, g2, baseWidth, baseHeight, args);
                 } else {
@@ -204,6 +231,7 @@ public abstract class CachedPainter {
         Object key = getClass();
         GraphicsConfiguration config = getGraphicsConfiguration(c);
         ImageCache cache = getCache(key);
+        cache.flush();  //ramahaja: always clear cache
         Image image = cache.getImage(key, config, w, h, args);
 
         if (image == null) {
@@ -314,10 +342,27 @@ public abstract class CachedPainter {
             return baseHeight;
         }
 
+        private int nearestMultipleOfFour(int val)
+        {
+            int x = 4;
+            int n = val;
+            n = n + x/2;
+            n = n - (n%x);
+            int result = n;
+
+            return result;
+
+        }
         @Override
         public Image getResolutionVariant(double destWidth, double destHeight) {
-            int w = (int) Math.ceil(destWidth);
+            int w = (int) Math.ceil(destWidth) ;
             int h = (int) Math.ceil(destHeight);
+
+
+            
+        //   w = (w%4==0) ? w : nearestMultipleOfFour(w);
+        //   h = (h%4==0) ? h : nearestMultipleOfFour(h);
+
             return getImage(PainterMultiResolutionCachedImage.class,
                     c, baseWidth, baseHeight, w, h, args);
         }
