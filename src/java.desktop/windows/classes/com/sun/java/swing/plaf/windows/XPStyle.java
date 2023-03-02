@@ -718,6 +718,8 @@ class XPStyle {
             DataBufferInt dbi = (DataBufferInt)raster.getDataBuffer();
             // Note that stealData() requires a markDirty() afterwards
             // since we modify the data in it.
+            System.out.println("Part being Painted: " + part);
+            
             ThemeReader.paintBackground(SunWritableRaster.stealData(dbi, 0),
                                         part.getControlName(c), part.getValue(),
                                         State.getValue(part, state),
