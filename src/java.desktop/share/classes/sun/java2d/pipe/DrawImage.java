@@ -57,8 +57,6 @@ import sun.java2d.loops.ScaledBlit;
 import sun.java2d.loops.SurfaceType;
 import sun.java2d.loops.TransformHelper;
 
-import static sun.java2d.pipe.Region.clipRound;
-
 public class DrawImage implements DrawImagePipe
 {
     public boolean copyImage(SunGraphics2D sg, Image img,
@@ -405,16 +403,10 @@ public class DrawImage implements DrawImagePipe
         }
 
         Region clip = sg.getCompClip();
-
-        final int dx1 = Math.max(clipRound(ddx1), clip.getLoX());
-      //  final int dx1 = Math.max((int) Math./*floor*/ceil(ddx1), clip.getLoX());
-        final int dy1 = Math.max(clipRound(ddy1), clip.getLoY());
-        //final int dy1 = Math.max((int) Math./*floor*/ceil(ddy1), clip.getLoY());
-        final int dx2 = Math.min(clipRound(ddx2), clip.getHiX());
-        //final int dx2 = Math.min((int) Math.ceil(ddx2), clip.getHiX());
-        final int dy2 = Math.min(clipRound(ddy2), clip.getHiY());
-        //final int dy2 = Math.min((int) Math.ceil(ddy2), clip.getHiY());
-
+        final int dx1 = Math.max((int) Math.floor(ddx1), clip.getLoX());
+        final int dy1 = Math.max((int) Math.floor(ddy1), clip.getLoY());
+        final int dx2 = Math.min((int) Math.ceil(ddx2), clip.getHiX());
+        final int dy2 = Math.min((int) Math.ceil(ddy2), clip.getHiY());
         if (dx2 <= dx1 || dy2 <= dy1) {
             // empty destination means no output
             return;
@@ -512,7 +504,6 @@ public class DrawImage implements DrawImagePipe
                                  sx1, sy1, sx2, sy2,
                                  dx1, dy1, dx2, dy2,
                                  null, 0, 0);
-                System.out.println("sx1: " + sx1 + ",sx2: " + sx2 + ",sy1: " +sy1 + ",sy2: "+ sy2 + ",dx1: "+dx1 +",dx2: "+dx2 +",dy1: "+dy1 +",dy2: " +dy2);
                 return;
             }
         }

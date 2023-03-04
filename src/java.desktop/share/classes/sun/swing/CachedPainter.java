@@ -360,8 +360,8 @@ public abstract class CachedPainter {
 
 
             
-       //   w = (w%4==0) ? w : nearestMultipleOfFour(w);
-       //    h = (h%4==0) ? h : nearestMultipleOfFour(h);
+        //   w = (w%4==0) ? w : nearestMultipleOfFour(w);
+        //   h = (h%4==0) ? h : nearestMultipleOfFour(h);
 
             return getImage(PainterMultiResolutionCachedImage.class,
                     c, baseWidth, baseHeight, w, h, args);

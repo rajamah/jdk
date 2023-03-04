@@ -3176,7 +3176,7 @@ public final class SunGraphics2D
 
                     if (0 < width && 0 < height && 0 < rvWidth && 0 < rvHeight) {
 
-                        double widthScale =  correctScaledValues(((double) rvWidth) / width);
+                        double widthScale = correctScaledValues(((double) rvWidth) / width);
                         double heightScale = correctScaledValues(((double) rvHeight) / height);
 
                         if (resolutionVariant instanceof VolatileImage) {
