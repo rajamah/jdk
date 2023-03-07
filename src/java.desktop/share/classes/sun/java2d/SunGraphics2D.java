@@ -3176,8 +3176,12 @@ public final class SunGraphics2D
 
                     if (0 < width && 0 < height && 0 < rvWidth && 0 < rvHeight) {
 
-                        double widthScale = correctScaledValues(((double) rvWidth) / width);
-                        double heightScale = correctScaledValues(((double) rvHeight) / height);
+                        /////################ helps with changing size of window to fix the icon rendering
+                        double widthScale = (((double) rvWidth) / width);
+                        double heightScale = (((double) rvHeight) / height);
+                       // double widthScale = correctScaledValues(((double) rvWidth) / width);
+                       // double heightScale = correctScaledValues(((double) rvHeight) / height);
+
 
                         if (resolutionVariant instanceof VolatileImage) {
                             SurfaceData sd = SurfaceManager

@@ -710,9 +710,11 @@ class XPStyle {
 
             Graphics2D g2d = (Graphics2D) g;
             AffineTransform  at = g2d.getTransform();
-            int dpi = (int)(correctScaledValues(at.getScaleX()) * 96);
+            //int dpi = (int)(correctScaledValues(at.getScaleX()) * 96);
 
-           // int dpi = (int)(correctScaledValues(scaleVal) * 96);
+        //   int dpi = (int)(correctScaledValues(scaleVal) * 96);
+
+            int dpi = (int)(at.getScaleX() * 96);
 
             WritableRaster raster = bi.getRaster();
             DataBufferInt dbi = (DataBufferInt)raster.getDataBuffer();

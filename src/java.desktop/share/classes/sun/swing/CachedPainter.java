@@ -146,7 +146,7 @@ public abstract class CachedPainter {
       //  flush(); //ramahaja: always clear cache
         ImageCache cache = getCache(key);
         cache.flush();  //ramahaja: always clear cache
-        Image image = cache.getImage(key, config, w, h, args);
+        Image image =cache.getImage(key, config, w, h, args);
         int attempts = 0;
         VolatileImage volatileImage = (image instanceof VolatileImage)
                 ? (VolatileImage) image
@@ -196,8 +196,11 @@ public abstract class CachedPainter {
                 if (volatileImage == null) {
                     if ((w != baseWidth || h != baseHeight)) {
 
-                        double scaleX = correctScaledValues((double)w / baseWidth);
-                        double scaleY = correctScaledValues((double)h / baseHeight);
+                        //double scaleX = correctScaledValues((double)w / baseWidth);
+                        //double scaleY = correctScaledValues((double)h / baseHeight);
+
+                        double scaleX = ((double)w / baseWidth);
+                        double scaleY = ((double)h / baseHeight);
 
                        g2.scale(scaleX, scaleY);
                     }
@@ -226,6 +229,95 @@ public abstract class CachedPainter {
         return image;
     }
 
+
+/*
+    private Image getImage(Object key, Component c,
+                           double baseWidth, double baseHeight,
+                           double w, double h, Object... args) {
+        GraphicsConfiguration config = getGraphicsConfiguration(c);
+        //  flush(); //ramahaja: always clear cache
+        ImageCache cache = getCache(key);
+        cache.flush();  //ramahaja: always clear cache
+        Image image = null;// cache.getImage(key, config, w, h, args);
+        int attempts = 0;
+        VolatileImage volatileImage = (image instanceof VolatileImage)
+                ? (VolatileImage) image
+                : null;
+        do {
+            boolean draw = false;
+            if (volatileImage != null) {
+                // See if we need to recreate the image
+                switch (volatileImage.validate(config)) {
+                    case VolatileImage.IMAGE_INCOMPATIBLE:
+                        volatileImage.flush();
+                        image = null;
+                        break;
+                    case VolatileImage.IMAGE_RESTORED:
+                        draw = true;
+                        break;
+                }
+            }
+            if (image == null) {
+                // Recreate the image
+                if( config != null && (w != baseHeight || h != baseWidth)) {
+                    AffineTransform tx = config.getDefaultTransform();
+                    double sx = tx.getScaleX();
+                    double sy = tx.getScaleY();
+                    if ( Double.compare(sx, 1) != 0 ||
+                            Double.compare(sy, 1) != 0) {
+                        if (Math.abs(sx * baseWidth - w) < 1 &&
+                                Math.abs(sy * baseHeight - h) < 1) {
+                            w = baseWidth;
+                            h = baseHeight;
+                        } else {
+                            w = (int)Math.ceil(w / sx);
+                            h = (int)Math.ceil(w / sy);
+                        }
+                    }
+                }
+                image = createImage(c, w, h, config, args);
+               // cache.setImage(key, config, w, h, args, image);
+                draw = true;
+                volatileImage = (image instanceof VolatileImage)
+                        ? (VolatileImage) image
+                        : null;
+            }
+            if (draw) {
+                // Render to the Image
+                Graphics2D g2 = (Graphics2D) image.getGraphics();
+                if (volatileImage == null) {
+                    if ((w != baseWidth || h != baseHeight)) {
+
+                        double scaleX = correctScaledValues((double)w / baseWidth);
+                        double scaleY = correctScaledValues((double)h / baseHeight);
+
+                        //g2.scale(scaleX, scaleY);
+                    }
+                    paintToImage(c, image, g2, baseWidth, baseHeight, args);
+                } else {
+                    SurfaceData sd = SurfaceManager.getManager(volatileImage)
+                            .getPrimarySurfaceData();
+                    double sx = sd.getDefaultScaleX();
+                    double sy = sd.getDefaultScaleY();
+                    if ( Double.compare(sx, 1) != 0 ||
+                            Double.compare(sy, 1) != 0) {
+                        g2.scale(1 / sx, 1 / sy);
+                    }
+                    paintToImage(c, image, g2, (int)Math.ceil(w * sx),
+                            (int)Math.ceil(h * sy), args);
+                }
+                g2.dispose();
+            }
+
+            // If we did this 3 times and the contents are still lost
+            // assume we're painting to a VolatileImage that is bogus and
+            // give up.  Presumably we'll be called again to paint.
+        } while ((volatileImage != null) &&
+                volatileImage.contentsLost() && ++attempts < 3);
+
+        return image;
+    }
+*/
     private void paint0(Component c, Graphics g, int x,
                         int y, int w, int h, Object... args) {
         Object key = getClass();

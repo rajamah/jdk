@@ -314,7 +314,8 @@ public final class ThemeReader {
     public static Dimension getPartSize(String widget, int part, int state) {
         readLock.lock();
         try {
-                return getPartSize(getTheme(widget, defaultDPI), part, state);
+            //changing DPI  = 120 makes it work for 125%
+                return getPartSize(getTheme(widget, 120/*defaultDPI*/), part, state);
             //return getPartSize((defaultDPIThemeHandle != null) ? defaultDPIThemeHandle : getTheme(widget) , part, state);
 
         } finally {
