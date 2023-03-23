@@ -223,7 +223,7 @@ BOOL InitThemes() {
               // We need to make sure we can load the Theme. This may not be
               // the case on a WinXP machine with classic mode enabled.
               //HTHEME hTheme = OpenThemeDataFunc(AwtToolkit::GetInstance().GetHWnd(), L"Button");
-              unsigned int dpi =168;
+              unsigned int dpi =96;
               HTHEME hTheme = OpenThemeDataFuncForDpi (AwtToolkit::GetInstance().GetHWnd(), L"Button", dpi);
               if(hTheme) {
                   DTRACE_PRINTLN("Loaded Theme data.\n");
@@ -298,36 +298,23 @@ JNIEXPORT jlong JNICALL Java_sun_awt_windows_ThemeReader_openTheme
     }
     // We need to open the Theme on a Window that will stick around.
     // The best one for that purpose is the Toolkit window.
-    //ramahaja
-    //Modify code to be based on DPI
-    //HTHEME htheme = OpenThemeDataFunc(AwtToolkit::GetInstance().GetHWnd(), str);
+
 
     HTHEME htheme;
     unsigned int udpi = static_cast<unsigned int>(dpi);
-
-    //printf("Java_sun_awt_windows_ThemeReader_openTheme() \n");
-
-
-
-    //printf("DPI being passed in from Java side: %u\n", udpi);
 
     if (OpenThemeDataFuncForDpi) {
         htheme = OpenThemeDataFuncForDpi(AwtToolkit::GetInstance().GetHWnd(), str, dpi);
         if (htheme) {
             DTRACE_PRINTLN("Loaded Theme data.\n");
-           // printf("hthemeforDPI: %p, DPI: %d, HWND: %p   \n", reinterpret_cast <void*>(htheme), dpi, reinterpret_cast <void*>(AwtToolkit::GetInstance().GetHWnd()));
         }
         else {
-            //FreeLibrary(hModThemes);
-            //hModThemes = NULL;
-            //printf("hthemeforDPI NULL \n");
             DTRACE_PRINTLN("DIDN'T Loaded Theme data.\n");
         }
     }
     else
     {
         htheme = OpenThemeDataFunc(AwtToolkit::GetInstance().GetHWnd(), str);
-        //printf("Calling OpenThemeDataFunc() ???????? \n");
     }
 
     JNU_ReleaseStringPlatformChars(env, widget, str);
@@ -342,8 +329,6 @@ JNIEXPORT jlong JNICALL Java_sun_awt_windows_ThemeReader_openTheme
  */
 JNIEXPORT void JNICALL Java_sun_awt_windows_ThemeReader_setWindowTheme
 (JNIEnv *env, jclass klass, jstring subAppName) {
-
-printf("setWindowTheme called ....\n");
 
     LPCTSTR str = NULL;
     if (subAppName != NULL) {
@@ -365,7 +350,6 @@ printf("setWindowTheme called ....\n");
 JNIEXPORT void JNICALL Java_sun_awt_windows_ThemeReader_closeTheme
 (JNIEnv *env, jclass klass, jlong theme) {
 
-printf("closeTheme called ....\n");
     HRESULT hres = CloseThemeDataFunc((HTHEME)theme);
     assert_result(hres, env);
 }
@@ -477,7 +461,6 @@ JNIEXPORT void JNICALL Java_sun_awt_windows_ThemeReader_paintBackground
     HTHEME hTheme = (HTHEME) theme;
 
     DTRACE_PRINTLN3("Java_sun_awt_windows_ThemeReader_paintButtonBackground w=%d h=%d\n stride=%d\n",w,h,stride);
-    printf("\n cpp paintButtonBackground, w: %d\n, h: %d\n, stride: %d\n", w,h,stride);
 
     if (hTheme == NULL) {
         JNU_ThrowInternalError(env, "HTHEME is null");
@@ -517,19 +500,6 @@ JNIEXPORT void JNICALL Java_sun_awt_windows_ThemeReader_paintBackground
     rect.bottom = y;
     //rect.right = w;
     rect.right = x;
-/*
-   if(w!=x)
-   {
-        printf("\n rect and java width don't match");
-        rect.left = w-x;
-        rect.top = h-y;
-        printf("\n rect.left: %ld",rect.left);
-        printf("\n rect.top: %ld",rect.top);
-
-
-   }
-
-*/
 
 
     ZeroMemory(pSrcBits,(BITS_PER_PIXEL>>3)*w*h);
@@ -590,9 +560,6 @@ JNIEXPORT jobject JNICALL Java_sun_awt_windows_ThemeReader_getThemeMargins
     MARGINS margins;
     HTHEME hTheme = (HTHEME) theme;
 
-
-    printf(" getThemeMargins() .... \n");
-
     if (hTheme != NULL) {
         HRESULT hres = GetThemeMarginsFunc(hTheme, NULL, part, state, property, NULL, &margins);
         assert_result(hres, env);
@@ -630,8 +597,6 @@ JNIEXPORT jobject JNICALL Java_sun_awt_windows_ThemeReader_getColor
 (JNIEnv *env, jclass klass, jlong theme, jint part, jint state, jint type) {
 
     HTHEME hTheme = (HTHEME) theme;
-
-printf(" getColor() .... \n");
 
     if (hTheme != NULL) {
         COLORREF color=0;
@@ -681,8 +646,6 @@ JNIEXPORT jint JNICALL Java_sun_awt_windows_ThemeReader_getInt
 
     HTHEME hTheme = (HTHEME) theme;
 
-    printf(" getInt() .... \n");
-
     int retVal = -1;
     if (hTheme != NULL) {
         HRESULT hres = GetThemeIntFunc(hTheme, part, state, prop, &retVal);
@@ -716,7 +679,7 @@ JNIEXPORT jboolean JNICALL Java_sun_awt_windows_ThemeReader_getBoolean
 (JNIEnv *env, jclass klass, jlong  theme, jint part, jint state, jint prop) {
     HTHEME hTheme = (HTHEME) theme;
     BOOL retVal = FALSE;
-    printf(" getBoolean() .... \n");
+
     if (hTheme != NULL) {
         HRESULT hres = GetThemeBoolFunc(hTheme, part, state, prop, &retVal);
         assert_result(hres, env);
@@ -747,9 +710,6 @@ JNIEXPORT jobject JNICALL Java_sun_awt_windows_ThemeReader_getPoint
 (JNIEnv *env, jclass klass, jlong theme, jint part, jint state, jint prop) {
     HTHEME hTheme = (HTHEME) theme;
     POINT point;
-
-
-printf(" getPoint() .... \n");
 
     if (hTheme != NULL) {
         if (GetThemePositionFunc(hTheme, part, state, prop, &point) != S_OK) {
@@ -796,8 +756,6 @@ JNIEXPORT jobject JNICALL Java_sun_awt_windows_ThemeReader_getPosition
 
     HTHEME hTheme = (HTHEME) theme;
 
-    printf(" getPosition() .... \n");
-
     if (hTheme != NULL) {
 
         POINT point;
@@ -837,24 +795,6 @@ JNIEXPORT jobject JNICALL Java_sun_awt_windows_ThemeReader_getPosition
     return NULL;
 }
 
-void rescale(SIZE *size, unsigned int dpi) {
-
-    //printf("rescale -- DPI: %u \n", dpi);
-
-
-   // if (dpiX !=0 && dpiX != 96) {
-        float invScaleX = 96.0f / dpi;
-        size->cx = (int) round(size->cx * invScaleX);
-
-        //printf("rescale -- size->cx: %d\n", size->cx);
-    //}
-   // if (dpiY != 0 && dpiY != 96) {
-        float invScaleY = 96.0f / dpi;
-        size->cy = (int) round(size->cy * invScaleY);
-        //printf("rescale -- size->cy: %d\n", size->cy);
-  //  }
-}
-
 /*
  * Class:     sun_awt_windows_ThemeReader
  * Method:    getPartSize
@@ -881,9 +821,6 @@ JNIEXPORT jobject JNICALL Java_sun_awt_windows_ThemeReader_getPartSize
                 CHECK_NULL_RETURN(dimMID, NULL);
             }
 
-            printf(" Part Size is: ->cx: %d\n", size.cx);
-           // rescale(&size, static_cast<unsigned int>(dpi));
-            //printf("After rescale -- size->cx: %d\n", size.cx);
             jobject dimObj = env->NewObject(dimClassID, dimMID, size.cx, size.cy);
             if (safe_ExceptionOccurred(env)) {
                 env->ExceptionDescribe();
@@ -904,8 +841,6 @@ JNIEXPORT jobject JNICALL Java_sun_awt_windows_ThemeReader_getPartSize
 JNIEXPORT jobject JNICALL Java_sun_awt_windows_ThemeReader_getThemeBackgroundContentMargins
 (JNIEnv *env, jclass klass, jlong hTheme, jint part, jint state,
 jint boundingWidth, jint boundingHeight) {
-
-printf(" Java_sun_awt_windows_ThemeReader_getThemeBackgroundContentMargins() .... \n");
 
     if (hTheme != NULL) {
         RECT boundingRect;

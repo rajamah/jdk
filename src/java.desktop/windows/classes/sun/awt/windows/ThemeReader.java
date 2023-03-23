@@ -194,7 +194,8 @@ public final class ThemeReader {
 
             Dimension d = getPartSize(getTheme(widget, dpi), part, state);
             System.out.println(".... Java paint Background part width: " + (int)d.getWidth() + ", part Height: " + (int)d.getHeight());
-            paintBackground(buffer, getTheme(widget, dpi), part, state, /*x*/(int) d.getWidth() , /*y*/(int) d.getHeight() , w, h, stride);
+
+            paintBackground(buffer, getTheme(widget, dpi), part, state, /*x*/(int) (d.getWidth()), /*y*/(int) (d.getHeight()) , w , h, stride);
         } finally {
             readLock.unlock();
         }
@@ -314,9 +315,7 @@ public final class ThemeReader {
     public static Dimension getPartSize(String widget, int part, int state) {
         readLock.lock();
         try {
-            //changing DPI  = 120 makes it work for 125%
-                return getPartSize(getTheme(widget, 120/*defaultDPI*/), part, state);
-            //return getPartSize((defaultDPIThemeHandle != null) ? defaultDPIThemeHandle : getTheme(widget) , part, state);
+            return  getPartSize(getTheme(widget, defaultDPI), part, state);
 
         } finally {
             readLock.unlock();

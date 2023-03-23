@@ -663,33 +663,9 @@ class XPStyle {
         public void flush() {
             super.flush();
         }
-
-        double correctScaledValues(double d)
-        {
-            double intP = Math.floor(d);
-            double decP = d - intP;
-            double retVal =d;
-
-            if ((decP >= 0.25) && (decP < 0.5))
-            {
-                retVal = intP + 0.25;
-            }
-            else if ((decP >= 0.5) && (decP < 0.75))
-            {
-                retVal = intP + 0.5;
-            }
-            else if ((decP >= 0.75) && (decP < 1.0))
-            {
-                retVal = intP + 0.75;
-            }
-
-            return retVal;
-
-        }
         
         protected void paintToImage(Component c, Image image, Graphics g,
                                     int w, int h, Object[] args) {
-            int baseWidth =w; //
 
 
             Skin skin = (Skin)args[0];
@@ -705,14 +681,9 @@ class XPStyle {
             w = bi.getWidth();
             h = bi.getHeight();
 
-            double scaleVal = (double) w / baseWidth;
-
 
             Graphics2D g2d = (Graphics2D) g;
             AffineTransform  at = g2d.getTransform();
-            //int dpi = (int)(correctScaledValues(at.getScaleX()) * 96);
-
-        //   int dpi = (int)(correctScaledValues(scaleVal) * 96);
 
             int dpi = (int)(at.getScaleX() * 96);
 
@@ -726,6 +697,7 @@ class XPStyle {
                                         0, 0, w, h, w, dpi);
 
             SunWritableRaster.markDirty(dbi);
+
         }
 
         protected Image createImage(Component c, int w, int h,
